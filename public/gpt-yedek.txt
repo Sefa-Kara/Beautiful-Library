@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookshelf Grid Scroll</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gallery-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        .gallery-container:active {
+            cursor: grabbing;
+        }
+
+        .gallery-track {
+            display: flex;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform;
+            /* width: 2900vw; 29 pages * 100vw each */
+            width: auto;
+        }
+
+        .gallery-page {
+            /* flex: 0 0 100vw; */
+            flex: 0 0 90vw; /* was 100vw */
+            margin: 0 5vw;  /* Add spacing between pages */
+
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .gallery-page.active {
+            transform: scale(1.08);
+            z-index: 2;
+        }
+
+        .gallery-page.adjacent {
+            transform: scale(0.95);
+            z-index: 1;
+        }
+
+        .bookshelf-grid {
+            width: 60vw; /* 2 columns * 30vw each */
+            height: 60vh; /* 5 rows * 12vh each */
+            display: grid;
+            grid-template-columns: 30vw 30vw;
+            grid-template-rows: repeat(5, 12vh);
+            gap: 0;
+            position: relative;
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .gallery-page.active .bookshelf-grid {
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(210, 180, 140, 0.6);
+        }
+
+        .bookshelf-item {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border: 1px solid rgba(139, 118, 89, 0.3);
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .gallery-page.active .bookshelf-item {
+            border: 1px solid rgba(210, 180, 140, 0.5);
+        }
+
+        .bookshelf-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Bookshelf background pattern */
+        .bookshelf-bg {
+            background-image: url('/home/sefa/Downloads/360_F_634209175_2ePq8IyX4W4eAatkjQrVOtmn54JF4kRQ.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .wood-grain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    rgba(139, 118, 89, 0.1) 1px,
+                    transparent 2px,
+                    transparent 20px
+                ),
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    rgba(160, 130, 100, 0.05) 1px,
+                    transparent 3px,
+                    transparent 40px
+                );
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            z-index: 10;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 16px;
+            border-radius: 15px;
+        }
+
+        .position-indicator {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 1rem;
+            opacity: 0.8;
+            z-index: 10;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 16px;
+            border-radius: 15px;
+        }
+
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #D2B48C, #CDA477, #B89468);
+            z-index: 10;
+            transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 0 10px rgba(210, 180, 140, 0.5);
+        }
+
+        /* Side panels that show adjacent pages */
+        .side-panel {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 20vw;
+            overflow: hidden;
+            opacity: 0.2;
+            z-index: -1;
+            transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .gallery-page.active ~ .gallery-page .side-panel,
+        .gallery-page.active .side-panel {
+            opacity: 0.4;
+        }
+
+        .side-panel.left {
+            left: 0;
+        }
+
+        .side-panel.right {
+            right: 0;
+        }
+
+        .side-panel .bookshelf-grid {
+            width: 60vw;
+            height: 60vh;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .side-panel.left .bookshelf-grid {
+            right: -40vw;
+        }
+
+        .side-panel.right .bookshelf-grid {
+            left: -40vw;
+        }
+
+        .page-number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            z-index: 5;
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .gallery-page.active .page-number {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.4rem;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+        }
+    </style>
+</head>
+<body>
+    <div class="gallery-container" id="gallery">
+        <div class="scroll-indicator">
+            Scroll Down → Move Right | Scroll Up → Move Left
+        </div>
+        
+        <div class="gallery-track" id="track">
+            <!-- 29 pages will be generated by JavaScript -->
+        </div>
+        
+        <div class="position-indicator" id="position">
+            Page 1 of 29
+        </div>
+        
+        <div class="progress-bar" id="progress"></div>
+    </div>
+
+    <script>
+        class BookshelfGridGallery {
+            constructor() {
+                this.container = document.getElementById('gallery');
+                this.track = document.getElementById('track');
+                this.positionIndicator = document.getElementById('position');
+                this.progressBar = document.getElementById('progress');
+                
+                this.currentPosition = 0;
+                this.totalPages = 29;
+                this.scrollSensitivity = 25; // Reduced for smoother scrolling
+                this.isScrolling = false;
+                this.maxScroll = (this.totalPages - 1) * 100;
+                
+                this.init();
+            }
+            
+            init() {
+                this.createPages();
+                this.addEventListeners();
+                this.updateGallery();
+            }
+            
+            createPages() {
+                for (let pageIndex = 0; pageIndex < this.totalPages; pageIndex++) {
+                    const page = document.createElement('div');
+                    page.className = 'gallery-page';
+                    
+                    // Create the main grid for this page
+                    const grid = this.createBookshelfGrid(pageIndex);
+                    page.appendChild(grid);
+                    
+                    // Create side panels showing adjacent pages
+                    /*if (pageIndex > 0) {
+                        const leftPanel = document.createElement('div');
+                        leftPanel.className = 'side-panel left';
+                        const leftGrid = this.createBookshelfGrid(pageIndex - 1);
+                        leftPanel.appendChild(leftGrid);
+                        page.appendChild(leftPanel);
+                    }*/
+                    
+                    // if (pageIndex < this.totalPages - 1) {
+                    //     const rightPanel = document.createElement('div');
+                    //     rightPanel.className = 'side-panel right';
+                    //     const rightGrid = this.createBookshelfGrid(pageIndex + 1);
+                    //     rightPanel.appendChild(rightGrid);
+                    //     page.appendChild(rightPanel);
+                    // }
+                    
+                    this.track.appendChild(page);
+                }
+                this.track.style.width = `${this.totalPages * 100}vw`; // because each page + margin = 100vw total
+            }
+            
+            createBookshelfGrid(pageIndex) {
+                const grid = document.createElement('div');
+                grid.className = 'bookshelf-grid';
+                
+                // Add page number overlay
+                const pageNumber = document.createElement('div');
+                pageNumber.className = 'page-number';
+                pageNumber.textContent = `Page ${pageIndex + 1}`;
+                grid.appendChild(pageNumber);
+                
+                // Create 10 bookshelf items (5 rows × 2 columns)
+                for (let i = 0; i < 10; i++) {
+                    const shelf = document.createElement('div');
+                    shelf.className = 'bookshelf-item bookshelf-bg';
+                    
+                    // Add wood grain overlay
+                    const woodGrain = document.createElement('div');
+                    woodGrain.className = 'wood-grain';
+                    shelf.appendChild(woodGrain);
+                    
+                    grid.appendChild(shelf);
+                }
+                
+                return grid;
+            }
+            
+            addEventListeners() {
+                // Mouse wheel event
+                this.container.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    this.handleWheel(e);
+                });
+                
+                // Keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowLeft') this.moveLeft();
+                    if (e.key === 'ArrowRight') this.moveRight();
+                    if (e.key === 'Home') this.goToPosition(0);
+                    if (e.key === 'End') this.goToPosition(this.maxScroll);
+                });
+                
+                // Touch events for mobile
+                let startX = 0;
+                let endX = 0;
+                
+                this.container.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX;
+                });
+                
+                this.container.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                });
+                
+                this.container.addEventListener('touchend', (e) => {
+                    endX = e.changedTouches[0].clientX;
+                    this.handleSwipe(startX, endX);
+                });
+            }
+            
+            handleWheel(e) {
+                if (this.isScrolling) return;
+                
+                const delta = e.deltaY;
+                
+                // Scroll down = move right, Scroll up = move left
+                if (delta > 0) {
+                    this.moveRight();
+                } else if (delta < 0) {
+                    this.moveLeft();
+                }
+            }
+            
+            handleSwipe(startX, endX) {
+                const threshold = 50;
+                const difference = startX - endX;
+                
+                if (Math.abs(difference) > threshold) {
+                    if (difference > 0) {
+                        this.moveRight();
+                    } else {
+                        this.moveLeft();
+                    }
+                }
+            }
+            
+            moveLeft() {
+                this.currentPosition = Math.max(0, this.currentPosition - this.scrollSensitivity);
+                this.updateGallery();
+            }
+            
+            moveRight() {
+                this.currentPosition = Math.min(this.maxScroll, this.currentPosition + this.scrollSensitivity);
+                this.updateGallery();
+            }
+            
+            goToPosition(position) {
+                this.currentPosition = Math.max(0, Math.min(this.maxScroll, position));
+                this.updateGallery();
+            }
+            
+            updateGallery() {
+                this.isScrolling = true;
+                
+                // Move the track
+                const translateX = -this.currentPosition;
+                this.track.style.transform = `translateX(${translateX}vw)`;
+                
+                // Update page states for scaling effects
+                this.updatePageStates();
+                
+                // Update position indicator
+                const currentPage = Math.floor(this.currentPosition / 100) + 1;
+                this.positionIndicator.textContent = `Page ${currentPage} of ${this.totalPages}`;
+                
+                // Update progress bar
+                const progress = (this.currentPosition / this.maxScroll) * 100;
+                this.progressBar.style.width = `${progress}%`;
+                
+                // Reset scrolling flag after animation
+                setTimeout(() => {
+                    this.isScrolling = false;
+                }, 600); // Increased to match animation duration
+            }
+            
+            updatePageStates() {
+                const pages = document.querySelectorAll('.gallery-page');
+                const currentPageIndex = Math.round(this.currentPosition / 100);
+                
+                pages.forEach((page, index) => {
+                    page.classList.remove('active', 'adjacent');
+                    
+                    if (index === currentPageIndex) {
+                        page.classList.add('active');
+                    } else if (Math.abs(index - currentPageIndex) === 1) {
+                        page.classList.add('adjacent');
+                    }
+                });
+            }
+        }
+        
+        // Initialize the gallery
+        document.addEventListener('DOMContentLoaded', () => {
+            new BookshelfGridGallery();
+        });
+    </script>
+</body>
+</html>
