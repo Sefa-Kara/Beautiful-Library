@@ -1,14 +1,10 @@
 {
   "name": "beautiful-library",
   "version": "1.0.0",
-  "description": "",
+  "description": "Beautiful Library",
   "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node src/index.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -17,24 +13,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/Sefa-Kara/Beautiful-Library/issues"
   },
-  "homepage": "https://github.com/Sefa-Kara/Beautiful-Library#readme",
-  "dependencies": {
-    "bcrypt": "^6.0.0",
-    "dotenv": "^17.1.0",
-    "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.16.2"
-  },
-  "devDependencies": {
-    "eslint": "^9.30.1",
-    "husky": "^9.1.7",
-    "jest": "^30.0.4",
-    "lint-staged": "^16.1.2",
-    "nodemon": "^3.1.10",
-    "prettier": "^3.6.2",
-    "supertest": "^7.1.3"
-  }
+  "homepage": "https://github.com/Sefa-Kara/Beautiful-Library#readme"
 }
