@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/Sefa-Kara/Beautiful-Library/issues"
   },
-  "homepage": "https://github.com/Sefa-Kara/Beautiful-Library#readme"
+  "homepage": "https://github.com/Sefa-Kara/Beautiful-Library#readme",
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
 }
