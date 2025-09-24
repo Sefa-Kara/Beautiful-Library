@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beautiful Library</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <script src="./script.js"></script>
+  </head>
+  <body>
+    <div class="loading" id="loading">Loading library...</div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+      <div class="logo">
+        <i class="fas fa-book-open"></i>
+        <span>DigitalLibrary</span>
+      </div>
+
+      <ul class="nav-links">
+        <li>
+          <a href="/" class="active"><i class="fas fa-home"></i> Home</a>
+        </li>
+        <li>
+          <a href="/favorites"><i class="fas fa-bookmark"></i> Favorites</a>
+        </li>
+        <li>
+          <a href="/reviews"><i class="fas fa-star"></i> Reviews</a>
+        </li>
+        <li>
+          <a href="/events"><i class="fas fa-calendar"></i> Events</a>
+        </li>
+        <li>
+          <a href="/about"><i class="fas fa-info-circle"></i> About</a>
+        </li>
+        <li>
+          <a href="/contact"><i class="fas fa-phone"></i> Contact</a>
+        </li>
+      </ul>
+
+      <div class="search-container">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search for books, authors..."
+        />
+      </div>
+
+      <div class="user-profile" id="userProfile">
+        <div class="user-avatar">JS</div>
+        <span class="user-name">John Smith</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+    </nav>
+
+    <!-- User Dropdown -->
+    <div class="user-dropdown" id="userDropdown">
+      <div class="dropdown-header">
+        <h3>John Smith</h3>
+        <p>Premium Member</p>
+      </div>
+      <ul class="dropdown-menu">
+        <li>
+          <a href="#"><i class="fas fa-user"></i> My Profile</a>
+        </li>
+        <li>
+          <a href="#"><i class="fas fa-bookmark"></i> My Favorites</a>
+        </li>
+        <li>
+          <a href="#"><i class="fas fa-history"></i> Reading History</a>
+        </li>
+        <li>
+          <a href="#"><i class="fas fa-cog"></i> Settings</a>
+        </li>
+        <li>
+          <a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+      <div class="search-results">
+        <!-- Search results will appear here -->
+      </div>
+    </div>
+
+    <div class="instructions">
+      <h3>📚 Navigation</h3>
+      <p>🖱️ <strong>Drag:</strong> Hold & move horizontally</p>
+      <p>⚡ <strong>Scroll:</strong> Use wheel on shelves</p>
+      <p>📖 <strong>Click:</strong> View book details</p>
+      <p>🔤 <strong>Shelves:</strong> Organized A-Z</p>
+      <p>🏢 <strong>Floors:</strong> Multiple levels per shelf</p>
+    </div>
+
+    <div class="library-container" id="libraryContainer">
+      <div class="bookshelf-wrapper" id="bookshelfWrapper"></div>
+    </div>
+
+    <div class="shelf-indicators" id="shelfIndicators"></div>
+
+    <div id="bookModal" class="modal">
+      <div class="modal-content">
+        <span class="close" id="closeModal">&times;</span>
+        <div class="book-details" id="bookDetails"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <ul class="footer-links">
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Service</a></li>
+        <li><a href="#">Help Center</a></li>
+        <li><a href="#">Careers</a></li>
+      </ul>
+      <div class="copyright">© 2023 DigitalLibrary. All rights reserved.</div>
+    </div>
+  </body>
+</html>

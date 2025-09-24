@@ -4,7 +4,7 @@
   "description": "Beautiful Library",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon app.js"
   },
   "repository": {
     "type": "git",
@@ -18,7 +18,19 @@
     "url": "https://github.com/Sefa-Kara/Beautiful-Library/issues"
   },
   "homepage": "https://github.com/Sefa-Kara/Beautiful-Library#readme",
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
   "dependencies": {
-    "lodash": "^4.17.21"
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "fetch": "^1.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.1",
+    "node-fetch": "^3.3.2",
+    "nodemailer": "^7.0.6"
   }
 }

@@ -1,0 +1,569 @@
+async function fetchBooks() {
+  const res = await fetch("/books");
+  return await res.json();
+}
+
+let allBooks = [];
+document.addEventListener("DOMContentLoaded", async () => {
+  allBooks = await fetchBooks();
+  initLibrary();
+});
+
+// Global variables
+let isDragging = false;
+let startX = 0;
+let scrollLeft = 0;
+let currentTranslateX = 0;
+let currentShelfIndex = 0;
+let isAnimating = false;
+const shelves = {};
+const shelfLetters = [];
+const bookColors = [
+  "#8B4513",
+  "#A0522D",
+  "#CD853F",
+  "#D2691E",
+  "#B22222",
+  "#DC143C",
+  "#8B0000",
+  "#800000",
+  "#2F4F4F",
+  "#556B2F",
+  "#6B8E23",
+  "#808000",
+  "#483D8B",
+  "#4B0082",
+  "#800080",
+  "#8B008B",
+  "#4682B4",
+  "#5F9EA0",
+  "#008B8B",
+  "#2E8B57",
+];
+
+// Initialize the library
+function initLibrary() {
+  createShelves();
+  console.log("shelves created");
+  loadBooks();
+  console.log("books loaded");
+  setupDragging();
+  console.log("setup dragged");
+  setupModal();
+  console.log("setup modal");
+  setupUserDropdown();
+  console.log("setup user drop down");
+  setupSearch();
+  console.log("search setup");
+  createShelfIndicators();
+  console.log("shelf indicators");
+  centerShelf(0);
+  document.getElementById("loading").style.display = "none";
+}
+
+// Create A-Z shelves
+function createShelves() {
+  const wrapper = document.getElementById("bookshelfWrapper");
+
+  for (let i = 65; i <= 90; i++) {
+    const letter = String.fromCharCode(i);
+    shelfLetters.push(letter);
+
+    const shelf = document.createElement("div");
+    shelf.className = "shelf";
+    shelf.id = `shelf-${letter}`;
+
+    shelf.innerHTML = `
+                    <div class="shelf-label">${letter}</div>
+                    <div class="shelf-board">
+                        <div class="books-container" id="books-${letter}"></div>
+                    </div>
+                `;
+
+    wrapper.appendChild(shelf);
+    shelves[letter] = [];
+  }
+}
+
+// Create shelf indicators
+function createShelfIndicators() {
+  const indicatorsContainer = document.getElementById("shelfIndicators");
+  indicatorsContainer.innerHTML = "";
+
+  shelfLetters.forEach((letter, index) => {
+    const indicator = document.createElement("div");
+    indicator.className = "shelf-indicator";
+    if (index === 0) indicator.classList.add("active");
+    indicator.dataset.index = index;
+    indicator.addEventListener("click", () => {
+      centerShelf(index);
+    });
+    indicatorsContainer.appendChild(indicator);
+  });
+}
+
+// Center a specific shelf
+function centerShelf(index) {
+  if (isAnimating) return;
+
+  isAnimating = true;
+  currentShelfIndex = index;
+
+  // Calculate the position to center this shelf
+  const shelfWidth = window.innerWidth * 0.6; // 60vw
+  const targetPosition = -index * shelfWidth;
+
+  // Update indicators
+  document.querySelectorAll(".shelf-indicator").forEach((indicator, i) => {
+    if (i === index) {
+      indicator.classList.add("active");
+    } else {
+      indicator.classList.remove("active");
+    }
+  });
+
+  // Animate to the target position
+  const wrapper = document.getElementById("bookshelfWrapper");
+  wrapper.style.transition = "transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)";
+  wrapper.style.transform = `translateX(${targetPosition}px)`;
+  currentTranslateX = targetPosition;
+
+  // Reset transition after animation completes
+  setTimeout(() => {
+    wrapper.style.transition = "none";
+    isAnimating = false;
+  }, 500);
+}
+
+// Load example books
+function loadBooks() {
+  // Distribute books to appropriate shelves
+  distributeBooks(allBooks);
+}
+
+// Distribute books to appropriate shelves
+function distributeBooks(books) {
+  books.forEach((book) => {
+    const firstLetter = book.title[0].toUpperCase();
+    if (firstLetter >= "A" && firstLetter <= "Z") {
+      if (!shelves[firstLetter]) {
+        shelves[firstLetter] = [];
+      }
+      shelves[firstLetter].push(book);
+    }
+  });
+
+  // Sort books in each shelf and render
+  Object.keys(shelves).forEach((letter) => {
+    shelves[letter].sort((a, b) => a.title.localeCompare(b.title));
+    renderShelf(letter);
+  });
+}
+
+// Render books in a shelf with multiple floors
+function renderShelf(letter) {
+  const container = document.getElementById(`books-${letter}`);
+  container.innerHTML = "";
+
+  if (shelves[letter].length === 0) {
+    container.innerHTML = '<div class="no-books">No books yet</div>';
+    return;
+  }
+
+  // Calculate how many floors we need (max 17 books per floor)
+  const booksPerFloor = 17;
+  const numFloors = Math.ceil(shelves[letter].length / booksPerFloor);
+
+  for (let floor = 0; floor < numFloors; floor++) {
+    const floorDiv = document.createElement("div");
+    floorDiv.className = "shelf-floor";
+
+    const floorLabel = document.createElement("div");
+    floorLabel.className = "floor-label";
+    floorLabel.textContent = `Floor ${floor + 1}`;
+    floorDiv.appendChild(floorLabel);
+
+    const floorBooksDiv = document.createElement("div");
+    floorBooksDiv.className = "floor-books";
+    floorBooksDiv.id = `floor-books-${letter}-${floor}`;
+
+    // Add books for this floor
+    const startIndex = floor * booksPerFloor;
+    const endIndex = Math.min(
+      startIndex + booksPerFloor,
+      shelves[letter].length
+    );
+
+    for (let i = startIndex; i < endIndex; i++) {
+      const book = shelves[letter][i];
+      const bookSpine = createBookSpine(book, i);
+      floorBooksDiv.appendChild(bookSpine);
+    }
+
+    floorDiv.appendChild(floorBooksDiv);
+    container.appendChild(floorDiv);
+
+    // Adjust book widths to fit exactly 735px for 17 books
+    if (endIndex - startIndex === booksPerFloor) {
+      adjustBookWidths(`floor-books-${letter}-${floor}`);
+    }
+  }
+}
+
+// Adjust book widths to ensure total width is exactly 735px
+// function adjustBookWidths(floorId) {
+//   const floorBooksDiv = document.getElementById(floorId);
+//   const books = floorBooksDiv.querySelectorAll(".book-spine");
+
+//   // Calculate total current width
+//   let totalWidth = 0;
+//   books.forEach((book) => {
+//     totalWidth += book.offsetWidth;
+//   });
+
+//   // Calculate gap width (assuming 8px gap between books)
+//   const gapWidth = (books.length - 1) * 8;
+//   totalWidth += gapWidth + 30;
+
+//   // Calculate adjustment ratio
+//   const targetWidth = 890;
+//   const ratio = targetWidth / totalWidth;
+
+//   // Apply adjusted widths
+//   books.forEach((book) => {
+//     const currentWidth = parseFloat(getComputedStyle(book).width);
+//     const newWidth = currentWidth * ratio;
+//     book.style.width = `${newWidth}px`;
+//     book.dataset.originalWidth = currentWidth;
+//   });
+// }
+
+function adjustBookWidths(floorId) {
+  const floorBooksDiv = document.getElementById(floorId);
+  const books = floorBooksDiv.querySelectorAll(".book-spine");
+  if (books.length === 0) return;
+
+  const floorWidth = floorBooksDiv.clientWidth;
+  const sideMargin = floorWidth * 0.02; // Kenarlarda %2 boşluk
+  const gap = 8; // kitaplar arası boşluk
+  const totalGap = (books.length - 1) * gap;
+
+  // Kitapları kendi rastgele genişlik değerlerinde bırak
+  let totalBookWidth = 0;
+  books.forEach((book) => {
+    const originalWidth =
+      parseFloat(book.dataset.originalWidth) ||
+      parseFloat(getComputedStyle(book).width);
+    book.dataset.originalWidth = originalWidth;
+    totalBookWidth += originalWidth;
+  });
+
+  // Eğer toplam genişlik + boşluklar > floorWidth, ufak bir oranla küçült
+  const availableWidth = floorWidth - totalGap - 2 * sideMargin;
+  const ratio =
+    totalBookWidth > availableWidth ? availableWidth / totalBookWidth : 1;
+
+  books.forEach((book) => {
+    const newWidth = (parseFloat(book.dataset.originalWidth) || 40) * ratio;
+    book.style.width = `${newWidth}px`;
+  });
+}
+
+// Create a book spine element
+function createBookSpine(book, index) {
+  const spine = document.createElement("div");
+  spine.className = "book-spine";
+
+  // Random height between 180-240px
+  const height = 180 + Math.random() * 60;
+  spine.style.height = `${height}px`;
+
+  // Base width between 35-50px (will be adjusted later if needed)
+  const width = 35 + Math.random() * 15;
+  spine.style.width = `${width}px`;
+
+  // Assign color based on index
+  const color = bookColors[index % bookColors.length];
+  spine.style.background = `linear-gradient(90deg, 
+                ${adjustColor(color, -30)} 0%, 
+                ${color} 10%, 
+                ${adjustColor(color, 20)} 50%, 
+                ${color} 90%, 
+                ${adjustColor(color, -30)} 100%)`;
+
+  // Add title
+  const title = document.createElement("div");
+  title.className = "book-title";
+  title.textContent =
+    book.title.length > 30 ? book.title.substring(0, 30) + "..." : book.title;
+  spine.appendChild(title);
+
+  // Add click event
+  spine.addEventListener("click", () => showBookDetails(book));
+
+  return spine;
+}
+
+// Adjust color brightness
+function adjustColor(color, amount) {
+  const usePound = color[0] === "#";
+  const col = usePound ? color.slice(1) : color;
+  const num = parseInt(col, 16);
+  let r = (num >> 16) + amount;
+  let g = ((num >> 8) & 0x00ff) + amount;
+  let b = (num & 0x0000ff) + amount;
+  r = r > 255 ? 255 : r < 0 ? 0 : r;
+  g = g > 255 ? 255 : g < 0 ? 0 : g;
+  b = b > 255 ? 255 : b < 0 ? 0 : b;
+  return (
+    (usePound ? "#" : "") +
+    ((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")
+  );
+}
+
+// Setup horizontal dragging
+function setupDragging() {
+  const container = document.getElementById("libraryContainer");
+  const wrapper = document.getElementById("bookshelfWrapper");
+
+  container.addEventListener("mousedown", (e) => {
+    // Check if clicking on a book or modal
+    if (e.target.closest(".book-spine") || e.target.closest(".modal")) return;
+
+    isDragging = true;
+    container.classList.add("dragging");
+    startX = e.pageX;
+    scrollLeft = currentTranslateX;
+    wrapper.style.transition = "none";
+    e.preventDefault();
+  });
+
+  container.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+
+    const x = e.pageX;
+    const walk = (x - startX) * 1.5;
+    currentTranslateX = scrollLeft + walk;
+
+    // Limit scrolling
+    const maxScroll = 0;
+    const minScroll = -(wrapper.scrollWidth - window.innerWidth);
+    currentTranslateX = Math.max(
+      minScroll,
+      Math.min(maxScroll, currentTranslateX)
+    );
+
+    wrapper.style.transform = `translateX(${currentTranslateX}px)`;
+  });
+
+  container.addEventListener("mouseup", () => {
+    isDragging = false;
+    container.classList.remove("dragging");
+
+    // Snap to the nearest shelf
+    snapToNearestShelf();
+  });
+
+  container.addEventListener("mouseleave", () => {
+    if (isDragging) {
+      isDragging = false;
+      container.classList.remove("dragging");
+      snapToNearestShelf();
+    }
+  });
+
+  // Handle touch events for mobile
+  container.addEventListener("touchstart", (e) => {
+    if (e.target.closest(".book-spine") || e.target.closest(".modal")) return;
+
+    isDragging = true;
+    container.classList.add("dragging");
+    startX = e.touches[0].pageX;
+    scrollLeft = currentTranslateX;
+    wrapper.style.transition = "none";
+    e.preventDefault();
+  });
+
+  container.addEventListener("touchmove", (e) => {
+    if (!isDragging) return;
+
+    const x = e.touches[0].pageX;
+    const walk = (x - startX) * 1.5;
+    currentTranslateX = scrollLeft + walk;
+
+    // Limit scrolling
+    const maxScroll = 0;
+    const minScroll = -(wrapper.scrollWidth - window.innerWidth);
+    currentTranslateX = Math.max(
+      minScroll,
+      Math.min(maxScroll, currentTranslateX)
+    );
+
+    wrapper.style.transform = `translateX(${currentTranslateX}px)`;
+    e.preventDefault();
+  });
+
+  container.addEventListener("touchend", () => {
+    if (isDragging) {
+      isDragging = false;
+      container.classList.remove("dragging");
+      snapToNearestShelf();
+    }
+  });
+}
+
+// Snap to the nearest shelf
+function snapToNearestShelf() {
+  const shelfWidth = window.innerWidth * 0.6; // 60vw
+  const currentPosition = -currentTranslateX;
+  const shelfIndex = Math.round(currentPosition / shelfWidth);
+
+  centerShelf(shelfIndex);
+}
+
+// Setup modal
+function setupModal() {
+  const modal = document.getElementById("bookModal");
+  const closeBtn = document.getElementById("closeModal");
+
+  closeBtn.addEventListener("click", () => {
+    modal.classList.remove("show");
+  });
+
+  window.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.classList.remove("show");
+    }
+  });
+}
+
+// Setup user dropdown
+function setupUserDropdown() {
+  const profile = document.getElementById("userProfile");
+  const dropdown = document.getElementById("userDropdown");
+
+  profile.addEventListener("click", () => {
+    dropdown.classList.toggle("show");
+  });
+
+  // Close dropdown when clicking elsewhere
+  window.addEventListener("click", (e) => {
+    if (
+      !e.target.closest("#userProfile") &&
+      !e.target.closest("#userDropdown")
+    ) {
+      dropdown.classList.remove("show");
+    }
+  });
+}
+
+// Setup search functionality
+function setupSearch() {
+  const searchInput = document.getElementById("searchInput");
+  const searchOverlay = document.getElementById("searchOverlay");
+
+  searchInput.addEventListener("focus", () => {
+    searchOverlay.classList.add("show");
+    showSearchResults();
+  });
+
+  searchInput.addEventListener("input", () => {
+    showSearchResults();
+  });
+
+  // Close search when clicking elsewhere
+  window.addEventListener("click", (e) => {
+    if (
+      !e.target.closest(".search-container") &&
+      !e.target.closest("#searchOverlay")
+    ) {
+      searchOverlay.classList.remove("show");
+    }
+  });
+}
+
+// Show search results
+function showSearchResults() {
+  const searchInput = document.getElementById("searchInput");
+  const searchTerm = searchInput.value.toLowerCase();
+  const searchResults = document.querySelector(".search-results");
+
+  // Clear previous results
+  searchResults.innerHTML = "";
+
+  if (searchTerm.length < 2) {
+    searchResults.innerHTML =
+      '<div class="no-books">Type at least 2 characters to search</div>';
+    return;
+  }
+
+  // Filter books based on search term
+  const results = allBooks.filter(
+    (book) =>
+      book.title.toLowerCase().includes(searchTerm) ||
+      book.author.toLowerCase().includes(searchTerm)
+  );
+
+  if (results.length === 0) {
+    searchResults.innerHTML =
+      '<div class="no-books">No books found matching your search</div>';
+    return;
+  }
+
+  // Display results
+  results.forEach((book) => {
+    const resultItem = document.createElement("div");
+    resultItem.className = "search-result-item";
+    resultItem.innerHTML = `
+                    <h3>${book.title}</h3>
+                    <p><strong>Author:</strong> ${book.author}</p>
+                    <p><strong>Year:</strong> ${book.year}</p>
+                    <p><strong>Pages:</strong> ${book.pages}</p>
+                `;
+    resultItem.addEventListener("click", () => {
+      showBookDetails(book);
+      document.getElementById("searchOverlay").classList.remove("show");
+    });
+    searchResults.appendChild(resultItem);
+  });
+}
+
+// Show book details in modal
+function showBookDetails(book) {
+  const modal = document.getElementById("bookModal");
+  const details = document.getElementById("bookDetails");
+
+  details.innerHTML = `
+                <h2>${book.title}</h2>
+                <p><strong>Author:</strong> ${book.author}</p>
+                <p><strong>First Published:</strong> ${book.year}</p>
+                <p><strong>Pages:</strong> ${book.pages}</p>
+                <div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #8b6914;">
+                    <button style="background: #8b6914; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-right: 10px;">
+                        <i class="fas fa-bookmark"></i> Add to Favorites
+                    </button>
+                    <button style="background: #6b4e1a; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">
+                        <i class="fas fa-star"></i> Rate & Review
+                    </button>
+                </div>
+            `;
+
+  modal.classList.add("show");
+}
+
+// Handle window resize
+// window.addEventListener("resize", () => {
+//   // Re-center the current shelf after resize
+//   centerShelf(currentShelfIndex);
+// });
+
+window.addEventListener("resize", () => {
+  shelfLetters.forEach((letter) => {
+    const floors = document.querySelectorAll(`#books-${letter} .shelf-floor`);
+    floors.forEach((floor, index) => {
+      adjustBookWidths(`floor-books-${letter}-${index}`);
+    });
+  });
+  centerShelf(currentShelfIndex);
+});
