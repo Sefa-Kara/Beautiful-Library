@@ -135,9 +135,7 @@ function centerShelf(index) {
   }, 500);
 }
 
-// Load example books
 function loadBooks() {
-  // Distribute books to appropriate shelves
   distributeBooks(allBooks);
 }
 
@@ -209,34 +207,6 @@ function renderShelf(letter) {
     }
   }
 }
-
-// Adjust book widths to ensure total width is exactly 735px
-// function adjustBookWidths(floorId) {
-//   const floorBooksDiv = document.getElementById(floorId);
-//   const books = floorBooksDiv.querySelectorAll(".book-spine");
-
-//   // Calculate total current width
-//   let totalWidth = 0;
-//   books.forEach((book) => {
-//     totalWidth += book.offsetWidth;
-//   });
-
-//   // Calculate gap width (assuming 8px gap between books)
-//   const gapWidth = (books.length - 1) * 8;
-//   totalWidth += gapWidth + 30;
-
-//   // Calculate adjustment ratio
-//   const targetWidth = 890;
-//   const ratio = targetWidth / totalWidth;
-
-//   // Apply adjusted widths
-//   books.forEach((book) => {
-//     const currentWidth = parseFloat(getComputedStyle(book).width);
-//     const newWidth = currentWidth * ratio;
-//     book.style.width = `${newWidth}px`;
-//     book.dataset.originalWidth = currentWidth;
-//   });
-// }
 
 function adjustBookWidths(floorId) {
   const floorBooksDiv = document.getElementById(floorId);
@@ -551,12 +521,6 @@ function showBookDetails(book) {
 
   modal.classList.add("show");
 }
-
-// Handle window resize
-// window.addEventListener("resize", () => {
-//   // Re-center the current shelf after resize
-//   centerShelf(currentShelfIndex);
-// });
 
 window.addEventListener("resize", () => {
   shelfLetters.forEach((letter) => {

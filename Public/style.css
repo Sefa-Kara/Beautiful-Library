@@ -413,7 +413,7 @@ body {
 }
 
 /* Instructions panel */
-.instructions {
+/* .instructions {
   position: fixed;
   top: 90px;
   right: 20px;
@@ -436,7 +436,7 @@ body {
   color: #523a11;
   font-size: 14px;
   margin: 5px 0;
-}
+} */
 
 /* No books message */
 .no-books {

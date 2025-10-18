@@ -72,17 +72,6 @@ async function initializeBooks() {
     .map((b) => b.editions?.docs?.[0]?.key)
     .filter(Boolean);
 
-  // fetch pages in two batches of 100
-  // const pagesApiBooks = (
-  //   await Promise.all([
-  //     fetchPages(editionKeys, 0),
-  //     fetchPages(editionKeys, 100),
-  //     fetchPages(editionKeys, 200),
-  //     fetchPages(editionKeys, 300),
-
-  //   ])
-  // ).flat();
-
   const pagesApiBooks = await fetchAllPages(editionKeys);
 
   //const pagesApiBooks = [...first, ...second];
