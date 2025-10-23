@@ -1,0 +1,835 @@
+/* Soft Minimalism Login Form - Complete & Self-Contained */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter",
+    system-ui, sans-serif;
+  background: linear-gradient(135deg, #faf9f6 0%, #f5f3f0 50%, #f0ede8 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  line-height: 1.5;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Soft Background */
+.soft-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.floating-shapes {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.soft-blob {
+  position: absolute;
+  border-radius: 50% 40% 60% 30%;
+  background: linear-gradient(
+    45deg,
+    rgba(240, 206, 170, 0.4),
+    rgba(224, 190, 156, 0.3)
+  );
+  animation: softFloat 12s ease-in-out infinite;
+  filter: blur(80px);
+}
+
+.blob-1 {
+  width: 300px;
+  height: 250px;
+  top: -10%;
+  left: -5%;
+  animation-delay: 0s;
+}
+
+.blob-2 {
+  width: 200px;
+  height: 180px;
+  top: 60%;
+  right: -5%;
+  animation-delay: -4s;
+  background: linear-gradient(
+    45deg,
+    rgba(210, 180, 140, 0.3),
+    rgba(195, 165, 125, 0.2)
+  );
+}
+
+.blob-3 {
+  width: 180px;
+  height: 160px;
+  top: 20%;
+  right: 20%;
+  animation-delay: -8s;
+  background: linear-gradient(
+    45deg,
+    rgba(230, 200, 160, 0.25),
+    rgba(215, 185, 145, 0.2)
+  );
+}
+
+.blob-4 {
+  width: 120px;
+  height: 100px;
+  bottom: 10%;
+  left: 15%;
+  animation-delay: -6s;
+  background: linear-gradient(
+    45deg,
+    rgba(220, 190, 150, 0.3),
+    rgba(205, 175, 135, 0.25)
+  );
+}
+
+@keyframes softFloat {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    border-radius: 50% 40% 60% 30%;
+  }
+  25% {
+    transform: translate(30px, -20px) rotate(90deg) scale(1.1);
+    border-radius: 40% 60% 30% 50%;
+  }
+  50% {
+    transform: translate(-20px, -30px) rotate(180deg) scale(0.9);
+    border-radius: 60% 30% 50% 40%;
+  }
+  75% {
+    transform: translate(-30px, 20px) rotate(270deg) scale(1.05);
+    border-radius: 30% 50% 40% 60%;
+  }
+}
+
+.login-container {
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  z-index: 1;
+}
+
+.soft-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  border-radius: 32px;
+  padding: 48px 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.03), 0 8px 24px rgba(0, 0, 0, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.soft-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(240, 206, 170, 0.5),
+    transparent
+  );
+}
+
+.comfort-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.gentle-logo {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-circle {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #f0ceaa, #e0be9c);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(240, 206, 170, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  animation: gentleBreathe 4s ease-in-out infinite;
+}
+
+@keyframes gentleBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 8px 16px rgba(240, 206, 170, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 12px 20px rgba(240, 206, 170, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+}
+
+.comfort-icon {
+  color: rgba(139, 102, 85, 0.8);
+  position: relative;
+  z-index: 2;
+}
+
+.gentle-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle,
+    rgba(240, 206, 170, 0.3) 0%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+.comfort-title {
+  color: #8b6655;
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.gentle-subtitle {
+  color: rgba(139, 102, 85, 0.7);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+/* Soft Form Fields */
+.soft-field {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.field-container {
+  position: relative;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid rgba(240, 206, 170, 0.3);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.field-container:focus-within {
+  border-color: #f0ceaa;
+  box-shadow: 0 0 0 3px rgba(240, 206, 170, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.soft-field input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 18px 16px;
+  color: #8b6655;
+  font-size: 15px;
+  font-weight: 400;
+  outline: none;
+  font-family: inherit;
+}
+
+/* Placeholder styles */
+.soft-field input::placeholder {
+  color: rgba(139, 102, 85, 0.6);
+  transition: opacity 0.2s ease;
+}
+
+/* Placeholder focus durumunda kaybolma */
+.soft-field input:focus::placeholder {
+  opacity: 0;
+}
+
+/* Input dolu olduğunda placeholder gizle */
+.soft-field input:not(:placeholder-shown)::placeholder {
+  opacity: 0;
+}
+
+/* Hata durumunda placeholder'ı tekrar göster */
+.soft-field.error input::placeholder {
+  opacity: 1;
+  color: #d97757;
+}
+
+/* Password Toggle */
+.soft-field:has(.gentle-toggle) input {
+  padding-right: 56px;
+}
+
+.gentle-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 4;
+  padding: 8px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.toggle-icon {
+  width: 20px;
+  height: 20px;
+  color: rgba(139, 102, 85, 0.6);
+  transition: color 0.2s ease;
+}
+
+.gentle-toggle:hover {
+  background: rgba(240, 206, 170, 0.1);
+}
+
+.gentle-toggle:hover .toggle-icon {
+  color: #8b6655;
+}
+
+.eye-closed {
+  display: none;
+}
+
+.gentle-toggle.toggle-active .eye-open {
+  display: none;
+}
+
+.gentle-toggle.toggle-active .eye-closed {
+  display: block;
+}
+
+/* Comfort Options */
+.comfort-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.gentle-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #8b6655;
+  font-weight: 400;
+}
+
+.gentle-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.checkbox-soft {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.check-circle {
+  width: 100%;
+  height: 100%;
+  border: 1.5px solid rgba(240, 206, 170, 0.4);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.3s ease;
+  position: absolute;
+}
+
+.check-mark {
+  color: transparent;
+  transition: color 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.gentle-checkbox input[type="checkbox"]:checked + .checkbox-soft .check-circle {
+  background: linear-gradient(135deg, #f0ceaa, #e0be9c);
+  border-color: #f0ceaa;
+  box-shadow: 0 2px 4px rgba(240, 206, 170, 0.3);
+}
+
+.gentle-checkbox input[type="checkbox"]:checked + .checkbox-soft .check-mark {
+  color: #8b6655;
+}
+
+.comfort-link {
+  color: #c19a82;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.comfort-link::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #c19a82;
+  transition: width 0.3s ease;
+}
+
+.comfort-link:hover::after {
+  width: 100%;
+}
+
+.comfort-link:hover {
+  color: #8b6655;
+}
+
+/* Comfort Button */
+.comfort-button {
+  width: 100%;
+  background: transparent;
+  color: #8b6655;
+  border: none;
+  border-radius: 16px;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  position: relative;
+  margin-bottom: 32px;
+  overflow: hidden;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.button-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #f0ceaa 0%, #e0be9c 100%);
+  transition: all 0.3s ease;
+  border-radius: 16px;
+}
+
+.comfort-button:hover {
+  transform: translateY(-1px);
+}
+
+.comfort-button:hover .button-background {
+  background: linear-gradient(135deg, #ebc49a 0%, #dbb88c 100%);
+  box-shadow: 0 8px 16px rgba(240, 206, 170, 0.4);
+}
+
+.comfort-button:active {
+  transform: translateY(0);
+}
+
+.button-text {
+  position: relative;
+  z-index: 2;
+  transition: opacity 0.3s ease;
+}
+
+.button-loader {
+  position: absolute;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gentle-spinner {
+  width: 20px;
+  height: 20px;
+  position: relative;
+}
+
+.spinner-circle {
+  width: 100%;
+  height: 100%;
+  border: 2px solid rgba(139, 102, 85, 0.2);
+  border-top: 2px solid #8b6655;
+  border-radius: 50%;
+  animation: gentleSpin 1s linear infinite;
+}
+
+@keyframes gentleSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.comfort-button.loading .button-text {
+  opacity: 0;
+}
+
+.comfort-button.loading .button-loader {
+  opacity: 1;
+}
+
+.button-glow {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, #f0ceaa, #e0be9c);
+  border-radius: 18px;
+  opacity: 0;
+  filter: blur(8px);
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.comfort-button:hover .button-glow {
+  opacity: 0.4;
+}
+
+/* Gentle Divider */
+.gentle-divider {
+  display: flex;
+  align-items: center;
+  margin: 32px 0;
+  gap: 16px;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(240, 206, 170, 0.4),
+    transparent
+  );
+}
+
+.divider-text {
+  color: rgba(139, 102, 85, 0.6);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* Comfort Social */
+.comfort-social {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.social-soft {
+  flex: 1;
+  background: transparent;
+  color: #8b6655;
+  border: 1.5px solid rgba(240, 206, 170, 0.3);
+  border-radius: 12px;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  min-height: 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.social-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  transition: all 0.3s ease;
+}
+
+.social-soft:hover {
+  border-color: #f0ceaa;
+  transform: translateY(-1px);
+}
+
+.social-soft:hover .social-background {
+  background: rgba(240, 206, 170, 0.1);
+}
+
+.social-soft span,
+.social-soft svg {
+  position: relative;
+  z-index: 2;
+}
+
+.social-glow {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  background: rgba(240, 206, 170, 0.3);
+  border-radius: 13px;
+  opacity: 0;
+  filter: blur(6px);
+  transition: opacity 0.3s ease;
+  z-index: 0;
+}
+
+.social-soft:hover .social-glow {
+  opacity: 1;
+}
+
+/* Comfort Signup */
+.comfort-signup {
+  text-align: center;
+  font-size: 14px;
+  color: rgba(139, 102, 85, 0.7);
+}
+
+.signup-text {
+  margin-right: 6px;
+}
+
+.signup-link {
+  font-weight: 500;
+}
+
+/* Gentle Error */
+.gentle-error {
+  color: #d97757;
+  font-size: 13px;
+  font-weight: 400;
+  margin-top: 6px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 5;
+}
+
+.gentle-error.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.soft-field.error .field-container {
+  border-color: #d97757;
+  background: rgba(217, 119, 87, 0.05);
+}
+
+.soft-field.error label {
+  color: #d97757;
+}
+
+/* Gentle Success */
+.gentle-success {
+  display: none;
+  text-align: center;
+  padding: 40px 20px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.4s ease;
+}
+
+.gentle-success.show {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.success-bloom {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bloom-rings {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.bloom-ring {
+  position: absolute;
+  border: 2px solid #f0ceaa;
+  border-radius: 50%;
+  animation: bloomExpand 1.2s ease-out forwards;
+  opacity: 0;
+}
+
+.ring-1 {
+  width: 60px;
+  height: 60px;
+  top: 20px;
+  left: 20px;
+  animation-delay: 0s;
+}
+
+.ring-2 {
+  width: 80px;
+  height: 80px;
+  top: 10px;
+  left: 10px;
+  animation-delay: 0.2s;
+}
+
+.ring-3 {
+  width: 100px;
+  height: 100px;
+  top: 0;
+  left: 0;
+  animation-delay: 0.4s;
+}
+
+@keyframes bloomExpand {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+.success-icon {
+  position: relative;
+  z-index: 2;
+  color: #8b6655;
+  animation: iconBloom 0.6s ease-out 0.6s forwards;
+  opacity: 0;
+}
+
+@keyframes iconBloom {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.success-title {
+  color: #8b6655;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.success-desc {
+  color: rgba(139, 102, 85, 0.7);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  body {
+    padding: 16px;
+  }
+
+  .soft-card {
+    padding: 36px 28px;
+    border-radius: 24px;
+  }
+
+  .comfort-title {
+    font-size: 1.75rem;
+  }
+
+  .gentle-logo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .logo-circle {
+    width: 52px;
+    height: 52px;
+  }
+
+  .comfort-options {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .comfort-social {
+    flex-direction: column;
+  }
+
+  .floating-shapes {
+    opacity: 0.5;
+  }
+
+  .soft-blob {
+    filter: blur(60px);
+  }
+}

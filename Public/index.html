@@ -32,9 +32,6 @@
           <a href="/reviews"><i class="fas fa-star"></i> Reviews</a>
         </li>
         <li>
-          <a href="/events"><i class="fas fa-calendar"></i> Events</a>
-        </li>
-        <li>
           <a href="/about"><i class="fas fa-info-circle"></i> About</a>
         </li>
         <li>
@@ -48,7 +45,11 @@
           type="text"
           id="searchInput"
           placeholder="Search for books, authors..."
+          autocomplete="off"
         />
+        <div class="search-suggestions" id="searchSuggestions">
+          <!-- Öneriler burada dinamik olarak gösterilecek -->
+        </div>
       </div>
 
       <div class="user-profile" id="userProfile">
@@ -60,26 +61,11 @@
 
     <!-- User Dropdown -->
     <div class="user-dropdown" id="userDropdown">
-      <div class="dropdown-header">
-        <h3>John Smith</h3>
-        <p>Premium Member</p>
+      <div class="dropdown-header" id="dropdownHeader">
+        <!-- Header content will be dynamically inserted -->
       </div>
-      <ul class="dropdown-menu">
-        <li>
-          <a href="#"><i class="fas fa-user"></i> My Profile</a>
-        </li>
-        <li>
-          <a href="#"><i class="fas fa-bookmark"></i> My Favorites</a>
-        </li>
-        <li>
-          <a href="#"><i class="fas fa-history"></i> Reading History</a>
-        </li>
-        <li>
-          <a href="#"><i class="fas fa-cog"></i> Settings</a>
-        </li>
-        <li>
-          <a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>
-        </li>
+      <ul class="dropdown-menu" id="dropdownMenu">
+        <!-- Menu items will be dynamically inserted -->
       </ul>
     </div>
 
@@ -89,15 +75,6 @@
         <!-- Search results will appear here -->
       </div>
     </div>
-
-    <!-- <div class="instructions">
-      <h3>📚 Navigation</h3>
-      <p>🖱️ <strong>Drag:</strong> Hold & move horizontally</p>
-      <p>⚡ <strong>Scroll:</strong> Use wheel on shelves</p>
-      <p>📖 <strong>Click:</strong> View book details</p>
-      <p>🔤 <strong>Shelves:</strong> Organized A-Z</p>
-      <p>🏢 <strong>Floors:</strong> Multiple levels per shelf</p>
-    </div> -->
 
     <div class="library-container" id="libraryContainer">
       <div class="bookshelf-wrapper" id="bookshelfWrapper"></div>

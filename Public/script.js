@@ -5,8 +5,18 @@ async function fetchBooks() {
 
 let allBooks = [];
 document.addEventListener("DOMContentLoaded", async () => {
-  allBooks = await fetchBooks();
-  initLibrary();
+  try {
+    allBooks = await fetchBooks();
+    console.log("Fetched books:", allBooks.length); // Kontrol amaçlı log
+    if (!Array.isArray(allBooks) || allBooks.length === 0) {
+      console.error("No books loaded");
+      return;
+    }
+    initLibrary();
+  } catch (error) {
+    console.error("Error loading books:", error);
+    document.getElementById("loading").textContent = "Error loading library...";
+  }
 });
 
 // Global variables
@@ -412,12 +422,74 @@ function setupModal() {
 function setupUserDropdown() {
   const profile = document.getElementById("userProfile");
   const dropdown = document.getElementById("userDropdown");
+  const dropdownHeader = document.getElementById("dropdownHeader");
+  const dropdownMenu = document.getElementById("dropdownMenu");
+  function isUserLoggedIn() {
+    // Burada kendi kontrol mantığınızı kullanabilirsiniz
+    return localStorage.getItem("user") !== null;
+  }
+
+  function updateDropdownContent() {
+    if (isUserLoggedIn()) {
+      // Giriş yapmış kullanıcı için görünüm
+      const user = JSON.parse(localStorage.getItem("user")); // veya API'den gelen veri
+
+      profile.innerHTML = `
+        <div class="user-avatar">${user.name.charAt(0)}${user.surname.charAt(
+        0
+      )}</div>
+        <span class="user-name">${user.name} ${user.surname}</span>
+        <i class="fas fa-chevron-down"></i>
+      `;
+
+      dropdownHeader.innerHTML = `
+        <h3>${user.name} ${user.surname}</h3>
+        <p>${user.membershipType || "Standard Member"}</p>
+      `;
+
+      dropdownMenu.innerHTML = `
+        <li><a href="#"><i class="fas fa-user"></i> My Profile</a></li>
+        <li><a href="#"><i class="fas fa-bookmark"></i> My Favorites</a></li>
+        <li><a href="#"><i class="fas fa-history"></i> Reading History</a></li>
+        <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+        <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+      `;
+    } else {
+      // Giriş yapmamış kullanıcı için görünüm
+      profile.innerHTML = `
+        <div class="user-avatar"><i class="fas fa-user"></i></div>
+        <span class="user-name">Guest</span>
+        <i class="fas fa-chevron-down"></i>
+      `;
+
+      dropdownHeader.innerHTML = `
+        <h3>Welcome, Guest</h3>
+        <p>Please login to continue</p>
+      `;
+
+      dropdownMenu.innerHTML = `
+        <li><a href="/login"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+        <li><a href="/register"><i class="fas fa-user-plus"></i> Register</a></li>
+      `;
+    }
+  }
+
+  // Sayfa yüklendiğinde dropdown içeriğini güncelle
+  updateDropdownContent();
+
+  // Çıkış yapma fonksiyonu
+  window.logout = function () {
+    localStorage.removeItem("user");
+    // API çağrısı yapılacak
+    // await fetch('/api/auth/logout');
+    updateDropdownContent();
+  };
 
   profile.addEventListener("click", () => {
     dropdown.classList.toggle("show");
   });
 
-  // Close dropdown when clicking elsewhere
+  // Dropdown dışına tıklandığında kapat
   window.addEventListener("click", (e) => {
     if (
       !e.target.closest("#userProfile") &&
@@ -428,98 +500,159 @@ function setupUserDropdown() {
   });
 }
 
-// Setup search functionality
+// Search functionality'i güncelleyelim
 function setupSearch() {
   const searchInput = document.getElementById("searchInput");
-  const searchOverlay = document.getElementById("searchOverlay");
+  const suggestionsContainer = document.getElementById("searchSuggestions");
+  let debounceTimer;
 
+  // Input event listener
+  searchInput.addEventListener("input", (e) => {
+    clearTimeout(debounceTimer);
+    const searchTerm = e.target.value.trim().toLowerCase();
+
+    if (searchTerm.length < 2) {
+      suggestionsContainer.style.display = "none";
+      return;
+    }
+
+    debounceTimer = setTimeout(() => {
+      const matchingBooks = allBooks
+        .filter(
+          (book) =>
+            (book.title && book.title.toLowerCase().includes(searchTerm)) ||
+            (book.author &&
+              book.author.toString().toLowerCase().includes(searchTerm))
+        )
+        .slice(0, 5);
+
+      if (matchingBooks.length === 0) {
+        suggestionsContainer.innerHTML =
+          '<div class="no-suggestions">No books found</div>';
+      } else {
+        const html = matchingBooks
+          .map(
+            (book) => `
+                    <div class="suggestion-item" data-title="${book.title}">
+                        <div class="title">${highlightMatch(
+                          book.title,
+                          searchTerm
+                        )}</div>
+                        <div class="author">by ${
+                          book.author || "Unknown Author"
+                        }</div>
+                    </div>
+                `
+          )
+          .join("");
+
+        suggestionsContainer.innerHTML = html;
+
+        // Öneri tıklama olaylarını ekle
+        const suggestionItems =
+          suggestionsContainer.querySelectorAll(".suggestion-item");
+        suggestionItems.forEach((item) => {
+          item.addEventListener("click", () => {
+            const selectedBook = matchingBooks.find(
+              (b) => b.title === item.dataset.title
+            );
+            if (selectedBook) {
+              searchInput.value = selectedBook.title;
+              suggestionsContainer.style.display = "none";
+              navigateToBook(selectedBook);
+            }
+          });
+        });
+      }
+
+      suggestionsContainer.style.display = "block";
+    }, 300);
+  });
+
+  // Focus event listener
   searchInput.addEventListener("focus", () => {
-    searchOverlay.classList.add("show");
-    showSearchResults();
+    const searchTerm = searchInput.value.trim();
+    if (searchTerm.length >= 2) {
+      suggestionsContainer.style.display = "block";
+    }
   });
 
-  searchInput.addEventListener("input", () => {
-    showSearchResults();
+  // Eşleşen metni vurgula
+  function highlightMatch(text, searchTerm) {
+    const regex = new RegExp(`(${searchTerm})`, "gi");
+    return text.replace(regex, "<strong>$1</strong>");
+  }
+
+  // Dışarı tıklandığında önerileri kapat
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".search-container")) {
+      suggestionsContainer.style.display = "none";
+    }
   });
 
-  // Close search when clicking elsewhere
-  window.addEventListener("click", (e) => {
-    if (
-      !e.target.closest(".search-container") &&
-      !e.target.closest("#searchOverlay")
-    ) {
-      searchOverlay.classList.remove("show");
+  // Enter tuşuna basıldığında ilk öneriyi seç
+  searchInput.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+      const firstSuggestion =
+        suggestionsContainer.querySelector(".suggestion-item");
+      if (firstSuggestion) {
+        const title = firstSuggestion.dataset.title;
+        const selectedBook = allBooks.find((b) => b.title === title);
+        if (selectedBook) {
+          searchInput.value = selectedBook.title;
+          suggestionsContainer.style.display = "none";
+          navigateToBook(selectedBook);
+        }
+      }
     }
   });
 }
 
-// Show search results
-function showSearchResults() {
-  const searchInput = document.getElementById("searchInput");
-  const searchTerm = searchInput.value.toLowerCase();
-  const searchResults = document.querySelector(".search-results");
+// Kitaba git ve göster
+function navigateToBook(book) {
+  const firstLetter = book.title[0].toUpperCase();
+  const shelfIndex = firstLetter.charCodeAt(0) - 65; // A=0, B=1, etc.
 
-  // Clear previous results
-  searchResults.innerHTML = "";
+  // Önce ilgili shelf'e git
+  centerShelf(shelfIndex);
 
-  if (searchTerm.length < 2) {
-    searchResults.innerHTML =
-      '<div class="no-books">Type at least 2 characters to search</div>';
-    return;
-  }
+  // Animasyon bittikten sonra kitabı bul ve göster
+  setTimeout(() => {
+    const shelfElement = document.getElementById(`shelf-${firstLetter}`);
+    const bookElements = shelfElement.querySelectorAll(".book-spine");
 
-  // Filter books based on search term
-  const results = allBooks.filter(
-    (book) =>
-      book.title.toLowerCase().includes(searchTerm) ||
-      book.author.toLowerCase().includes(searchTerm)
-  );
-
-  if (results.length === 0) {
-    searchResults.innerHTML =
-      '<div class="no-books">No books found matching your search</div>';
-    return;
-  }
-
-  // Display results
-  results.forEach((book) => {
-    const resultItem = document.createElement("div");
-    resultItem.className = "search-result-item";
-    resultItem.innerHTML = `
-                    <h3>${book.title}</h3>
-                    <p><strong>Author:</strong> ${book.author}</p>
-                    <p><strong>Year:</strong> ${book.year}</p>
-                    <p><strong>Pages:</strong> ${book.pages}</p>
-                `;
-    resultItem.addEventListener("click", () => {
-      showBookDetails(book);
-      document.getElementById("searchOverlay").classList.remove("show");
+    let targetBook;
+    bookElements.forEach((bookEl) => {
+      if (
+        bookEl.querySelector(".book-title").textContent.includes(book.title)
+      ) {
+        targetBook = bookEl;
+      }
     });
-    searchResults.appendChild(resultItem);
-  });
-}
 
-// Show book details in modal
-function showBookDetails(book) {
-  const modal = document.getElementById("bookModal");
-  const details = document.getElementById("bookDetails");
+    if (targetBook) {
+      // Kitabın konumuna scroll
+      const shelfBoard = shelfElement.querySelector(".shelf-board");
+      const bookTop = targetBook.offsetTop;
 
-  details.innerHTML = `
-                <h2>${book.title}</h2>
-                <p><strong>Author:</strong> ${book.author}</p>
-                <p><strong>First Published:</strong> ${book.year}</p>
-                <p><strong>Pages:</strong> ${book.pages}</p>
-                <div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #8b6914;">
-                    <button style="background: #8b6914; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-right: 10px;">
-                        <i class="fas fa-bookmark"></i> Add to Favorites
-                    </button>
-                    <button style="background: #6b4e1a; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">
-                        <i class="fas fa-star"></i> Rate & Review
-                    </button>
-                </div>
-            `;
+      shelfBoard.scrollTo({
+        top: Math.max(0, bookTop - 100),
+        behavior: "smooth",
+      });
 
-  modal.classList.add("show");
+      // Kitap detaylarını göster
+      setTimeout(() => {
+        showBookDetails(book);
+        // Kitabı vurgula
+        targetBook.style.transform = "scale(1.05)";
+        targetBook.style.boxShadow = "0 0 20px rgba(212, 175, 55, 0.5)";
+        setTimeout(() => {
+          targetBook.style.transform = "";
+          targetBook.style.boxShadow = "";
+        }, 2000);
+      }, 500);
+    }
+  }, 500); // Shelf kayma animasyonu bittikten sonra
 }
 
 window.addEventListener("resize", () => {
@@ -531,3 +664,18 @@ window.addEventListener("resize", () => {
   });
   centerShelf(currentShelfIndex);
 });
+
+// showBookDetails fonksiyonu
+function showBookDetails(book) {
+  const modal = document.getElementById("bookModal");
+  const details = document.getElementById("bookDetails");
+
+  details.innerHTML = `
+        <h2>${book.title}</h2>
+        <p><strong>Author:</strong> ${book.author || "Unknown Author"}</p>
+        <p><strong>Year:</strong> ${book.year || "Unknown Year"}</p>
+        <p><strong>Pages:</strong> ${book.pages || "Unknown Pages"}</p>
+    `;
+
+  modal.classList.add("show");
+}

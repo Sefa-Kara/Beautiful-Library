@@ -1,3 +1,6 @@
+// 1. Add dotenv at the very top so env vars are available
+require("dotenv").config();
+
 const express = require("express");
 const { get } = require("http");
 const app = express();
@@ -5,8 +8,15 @@ const mongoose = require("mongoose");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const path = require("path");
+const authRoutes = require("./routes/auth");
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use("/api/auth", authRoutes); // Bu satırı ekleyin
 
 app.use(express.static("./Public"));
+app.use(express.static("./Public/Login"));
 
 // For cache
 var bookCache;
@@ -63,8 +73,8 @@ async function initializeBooks() {
     return bookCache;
   }
   [foreverBooks, yearlyBooks] = await Promise.all([
-    getTrending("alltime", 500),
-    getTrending("yearly", 500),
+    getTrending("alltime", 300),
+    getTrending("yearly", 300),
   ]);
   // instead of using promise we could use await in combined
   const combined = [...foreverBooks, ...yearlyBooks];
@@ -117,12 +127,6 @@ app.get("/contact", (req, res) => {
   res.send("contact");
   res.end();
 });
-app.get("/events", (req, res) => {
-  console.log(req.route);
-  res.status(200);
-  res.send("events");
-  res.end();
-});
 app.get("/reviews", (req, res) => {
   console.log(req.route);
   res.status(200);
@@ -135,6 +139,17 @@ app.get("/favorites", (req, res) => {
   res.send("favorites");
   res.end();
 });
+app.get("/login", (req, res) => {
+  console.log(req.route);
+  res.status(200);
+  res.sendFile(path.join(__dirname, "Public", "Login", "index.html"));
+  res.end();
+});
+app.get("/register", (req, res) => {
+  res.status(200);
+  res.sendFile(path.join(__dirname, "Public", "Register", "index.html"));
+  res.end();
+});
 app.use((req, res) => {
   console.log(req.route);
   res.status(404);
@@ -142,18 +157,28 @@ app.use((req, res) => {
   res.end();
 });
 
-app.listen(4000, () => {
-  console.log("Server is listening on port 4000...");
-  module.exports = { initializeBooks };
-});
-
-mongoose
-  .connect(
-    "mongodb+srv://sefakara:ses12345@cluster0.jp5xm68.mongodb.net/Node-API?retryWrites=true&w=majority"
-  )
-  .then(() => {
+// MongoDB bağlantısını en üste taşıyalım ve async/await kullanalım
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      dbName: "Node-API",
+    });
     console.log("Connected to MongoDB");
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
-  });
+
+    // Start server only after DB connected
+    const port = process.env.PORT || 4000;
+    app.listen(port, () => {
+      console.log(`Server is listening on port ${port}...`);
+    });
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  }
+};
+
+// Uygulama başlamadan önce veritabanına bağlan
+connectDB();
+
+module.exports = { initializeBooks };
