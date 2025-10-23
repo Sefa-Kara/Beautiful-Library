@@ -9,11 +9,13 @@ const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const path = require("path");
 const authRoutes = require("./routes/auth");
+const favoritesRoutes = require("./routes/favorites");
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes); // Bu satırı ekleyin
+app.use("/api/favorites", require("./routes/favorites"));
 
 app.use(express.static("./Public"));
 app.use(express.static("./Public/Login"));
@@ -73,8 +75,8 @@ async function initializeBooks() {
     return bookCache;
   }
   [foreverBooks, yearlyBooks] = await Promise.all([
-    getTrending("alltime", 300),
-    getTrending("yearly", 300),
+    getTrending("alltime", 100),
+    getTrending("yearly", 100),
   ]);
   // instead of using promise we could use await in combined
   const combined = [...foreverBooks, ...yearlyBooks];

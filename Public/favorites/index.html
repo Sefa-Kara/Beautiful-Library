@@ -3,16 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Beautiful Library</title>
+    <title>Beautiful Library - Favorites</title>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <link rel="stylesheet" href="./style.css" />
-    <script src="./script.js"></script>
+    <link rel="stylesheet" href="./favorites.css" />
   </head>
   <body>
-    <div class="loading" id="loading">Loading library...</div>
+    <div class="loading" id="loading">Loading favorites...</div>
 
     <!-- Navigation Bar -->
     <nav class="navbar">
@@ -23,10 +22,12 @@
 
       <ul class="nav-links">
         <li>
-          <a href="/" class="active"><i class="fas fa-home"></i> Home</a>
+          <a href="/"><i class="fas fa-home"></i> Home</a>
         </li>
         <li>
-          <a href="/favorites"><i class="fas fa-bookmark"></i> Favorites</a>
+          <a href="/favorites" class="active"
+            ><i class="fas fa-bookmark"></i> Favorites</a
+          >
         </li>
         <li>
           <a href="/reviews"><i class="fas fa-star"></i> Reviews</a>
@@ -47,9 +48,7 @@
           placeholder="Search for books, authors..."
           autocomplete="off"
         />
-        <div class="search-suggestions" id="searchSuggestions">
-          <!-- Öneriler burada dinamik olarak gösterilecek -->
-        </div>
+        <div class="search-suggestions" id="searchSuggestions"></div>
       </div>
 
       <div class="user-profile" id="userProfile">
@@ -61,27 +60,23 @@
 
     <!-- User Dropdown -->
     <div class="user-dropdown" id="userDropdown">
-      <div class="dropdown-header" id="dropdownHeader">
-        <!-- Header content will be dynamically inserted -->
-      </div>
-      <ul class="dropdown-menu" id="dropdownMenu">
-        <!-- Menu items will be dynamically inserted -->
-      </ul>
+      <div class="dropdown-header" id="dropdownHeader"></div>
+      <ul class="dropdown-menu" id="dropdownMenu"></ul>
     </div>
 
-    <!-- Search Overlay -->
-    <div class="search-overlay" id="searchOverlay">
-      <div class="search-results">
-        <!-- Search results will appear here -->
-      </div>
-    </div>
-
+    <!-- Library Container -->
     <div class="library-container" id="libraryContainer">
-      <div class="bookshelf-wrapper" id="bookshelfWrapper"></div>
+      <div class="bookshelf-wrapper" id="bookshelfWrapper">
+        <div class="shelf">
+          <div class="shelf-label">Popular Favorites</div>
+          <div class="shelf-board">
+            <div class="books-container" id="favoritesContainer"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="shelf-indicators" id="shelfIndicators"></div>
-
+    <!-- Book Modal -->
     <div id="bookModal" class="modal">
       <div class="modal-content">
         <span class="close" id="closeModal">&times;</span>
@@ -99,5 +94,14 @@
       </ul>
       <div class="copyright">© 2023 DigitalLibrary. All rights reserved.</div>
     </div>
+
+    <script>
+      // Ana sayfadaki bazı fonksiyonları devre dışı bırak
+      window.initLibrary = null;
+      window.createShelves = null;
+      window.loadBooks = null;
+    </script>
+    <script src="../script.js"></script>
+    <script src="./favorites.js"></script>
   </body>
 </html>

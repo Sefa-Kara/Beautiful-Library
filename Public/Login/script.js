@@ -153,6 +153,7 @@ class SoftMinimalismLoginForm {
     return true;
   }
 
+  // handleSubmit fonksiyonunu güncelleyelim
   async handleSubmit(e) {
     e.preventDefault();
 
@@ -187,9 +188,11 @@ class SoftMinimalismLoginForm {
       // Başarılı giriş animasyonu
       this.showGentleSuccess();
 
-      // Ana sayfaya yönlendir
+      // Kullanıcıyı önceki sayfaya yönlendir
       setTimeout(() => {
-        window.location.href = "/";
+        const returnUrl = localStorage.getItem("returnUrl") || "/";
+        localStorage.removeItem("returnUrl"); // URL'yi temizle
+        window.location.href = returnUrl;
       }, 2000);
     } catch (error) {
       this.showError("password", error.message);

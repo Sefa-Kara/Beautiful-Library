@@ -665,17 +665,133 @@ window.addEventListener("resize", () => {
   centerShelf(currentShelfIndex);
 });
 
-// showBookDetails fonksiyonu
+// showBookDetails fonksiyonunu güncelleyelim
 function showBookDetails(book) {
   const modal = document.getElementById("bookModal");
   const details = document.getElementById("bookDetails");
 
+  const userData = localStorage.getItem("user");
+  let user = null;
+  try {
+    user = JSON.parse(userData);
+  } catch (e) {
+    console.error("Invalid user data in localStorage");
+  }
+
+  const isFavorite = user?.favorites?.some((fav) => fav.bookId === book.title);
+
+  // Tırnak işaretlerini template literal kullanarak düzeltelim
   details.innerHTML = `
-        <h2>${book.title}</h2>
-        <p><strong>Author:</strong> ${book.author || "Unknown Author"}</p>
-        <p><strong>Year:</strong> ${book.year || "Unknown Year"}</p>
-        <p><strong>Pages:</strong> ${book.pages || "Unknown Pages"}</p>
-    `;
+    <h2>${book.title}</h2>
+    <div class="book-header">
+        <button class="favorite-btn ${isFavorite ? "active" : ""}" 
+                onclick="toggleFavorite(\`${book.title}\`, \`${
+    book.author || "Unknown Author"
+  }\`)"
+                data-bookid="${book.title}">
+            <i class="fas fa-star"></i>
+        </button>
+    </div>
+    <p><strong>Author:</strong> ${book.author || "Unknown Author"}</p>
+    <p><strong>Year:</strong> ${book.year || "Unknown Year"}</p>
+    <p><strong>Pages:</strong> ${book.pages || "Unknown Pages"}</p>
+  `;
 
   modal.classList.add("show");
+}
+
+async function toggleFavorite(bookId, author) {
+  const token = localStorage.getItem("token");
+  const userData = localStorage.getItem("user");
+
+  if (!token || !userData) {
+    showLoginAlert();
+    return;
+  }
+
+  const user = JSON.parse(userData);
+  // CSS seçiciyi güvenli hale getirelim
+  const favoriteBtn = document.querySelector(
+    `.favorite-btn[data-bookid="${CSS.escape(bookId)}"]`
+  );
+  const isFavorite = favoriteBtn.classList.contains("active");
+
+  try {
+    const response = await fetch("/api/favorites", {
+      method: isFavorite ? "DELETE" : "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        bookId: bookId,
+        title: bookId,
+        author: author,
+        dateAdded: new Date(),
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        showLoginAlert();
+        return;
+      }
+      throw new Error("Failed to update favorites");
+    }
+
+    favoriteBtn.classList.toggle("active");
+
+    const updatedUser = { ...user };
+    if (!isFavorite) {
+      if (!updatedUser.favorites) updatedUser.favorites = [];
+      updatedUser.favorites.push({ bookId, title: bookId, author });
+      showNotification("Kitap favorilerinize eklendi");
+    } else {
+      updatedUser.favorites = updatedUser.favorites.filter(
+        (f) => f.bookId !== bookId
+      );
+      showNotification("Kitap favorilerinizden çıkarıldı");
+    }
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  } catch (error) {
+    console.error("Error toggling favorite:", error);
+    showNotification("Favoriler güncellenirken bir hata oluştu", "error");
+  }
+}
+
+// Show login alert function
+function showLoginAlert() {
+  const alertDiv = document.createElement("div");
+  alertDiv.className = "login-alert";
+  alertDiv.innerHTML = `
+        <div class="alert-content">
+            <i class="fas fa-exclamation-circle"></i>
+            <p>Please login to use favorites feature</p>
+            <div class="alert-buttons">
+                <button onclick="redirectToLogin()">Login</button>
+                <button onclick="closeLoginAlert(this)">Cancel</button>
+            </div>
+        </div>
+    `;
+  document.body.appendChild(alertDiv);
+}
+
+// Close login alert function
+function closeLoginAlert(button) {
+  const alertDiv = button.closest(".login-alert");
+  if (alertDiv) {
+    alertDiv.style.opacity = "0";
+    setTimeout(() => {
+      alertDiv.remove();
+    }, 300);
+  }
+}
+
+// Redirect to login page
+function redirectToLogin() {
+  // Save current page URL to localStorage to redirect back after login
+  localStorage.setItem("returnUrl", window.location.pathname);
+  window.location.href = "/login";
 }

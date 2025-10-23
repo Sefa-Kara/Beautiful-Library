@@ -162,6 +162,14 @@ body {
   margin-top: 2px;
 }
 
+/* Suggestion item içindeki favori sayısı için stil */
+.suggestion-item .favorite-count {
+  color: #8b6914;
+  font-size: 0.8em;
+  margin-top: 2px;
+  font-style: italic;
+}
+
 .no-suggestions {
   padding: 15px;
   text-align: center;
@@ -314,6 +322,7 @@ body {
   justify-content: center;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4),
     inset -2px 0 4px rgba(0, 0, 0, 0.2);
+  overflow: visible; /* Tooltip'in görünmesi için */
 }
 
 /* Book spine sides (darker) */
@@ -351,6 +360,42 @@ body {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
   font-weight: 500;
   letter-spacing: 0.5px;
+}
+
+/* Book favorite count */
+.favorite-count {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(212, 175, 55, 0.9);
+  color: #3a2a0a;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  z-index: 100;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.favorite-count::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid rgba(212, 175, 55, 0.9);
+}
+
+.book-spine:hover .favorite-count {
+  opacity: 1;
+  visibility: visible;
+  bottom: -35px;
 }
 
 /* Book hover effect */
@@ -721,103 +766,4 @@ body {
 .shelf-indicator.active {
   background: #d4af37;
   transform: scale(1.2);
-}
-
-/* Favorite button styling */
-.favorite-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 5px;
-  font-size: 24px;
-  color: #8b6914;
-  transition: all 0.3s ease;
-  outline: none;
-}
-
-.favorite-btn i {
-  transition: all 0.3s ease;
-}
-
-.favorite-btn:hover i {
-  transform: scale(1.2);
-  color: #d4af37;
-}
-
-.favorite-btn.active i {
-  color: #d4af37;
-  transform: scale(1.2);
-}
-
-/* Login Alert Styles */
-.login-alert {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-
-.alert-content {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e8d4a0 100%);
-  padding: 30px;
-  border-radius: 10px;
-  text-align: center;
-  max-width: 400px;
-  width: 90%;
-  border: 3px solid #8b6914;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-}
-
-.alert-content i {
-  font-size: 48px;
-  color: #8b6914;
-  margin-bottom: 20px;
-}
-
-.alert-content p {
-  color: #3a2a0a;
-  font-size: 18px;
-  margin-bottom: 25px;
-}
-
-.alert-buttons {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-}
-
-.alert-buttons button {
-  padding: 10px 25px;
-  border: 2px solid #8b6914;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 0.3s ease;
-}
-
-.alert-buttons button:first-child {
-  background: #8b6914;
-  color: #f4e4bc;
-}
-
-.alert-buttons button:last-child {
-  background: transparent;
-  color: #8b6914;
-}
-
-.alert-buttons button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-.alert-buttons button:active {
-  transform: translateY(0);
 }
