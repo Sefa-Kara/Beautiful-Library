@@ -42,6 +42,7 @@ const userSchema = new mongoose.Schema(
         bookId: String,
         title: String,
         review: String,
+        reviewerName: String,
         rating: Number,
         dateReviewed: Date,
       },

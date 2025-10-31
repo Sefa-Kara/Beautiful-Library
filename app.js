@@ -10,99 +10,20 @@ const fetch = (...args) =>
 const path = require("path");
 const authRoutes = require("./routes/auth");
 const favoritesRoutes = require("./routes/favorites");
+const reviewsRoutes = require("./routes/reviews");
+const { initializeBooks } = require("./services/books");
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes); // Bu satırı ekleyin
 app.use("/api/favorites", require("./routes/favorites"));
+app.use("/api/reviews", reviewsRoutes);
 
 app.use(express.static("./Public"));
 app.use(express.static("./Public/Login"));
 
-// For cache
-var bookCache;
-
-// Fetch book from api
-async function getTrending(type, limit = 100) {
-  const url =
-    "https://openlibrary.org/trending/" +
-    type +
-    ".json?details=false&limit=" +
-    limit +
-    "&offset=0";
-  console.log(url);
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch trending ${type} books`);
-  const data = await res.json();
-  return data.works;
-}
-
-// trending api doesn't provide page numbers, so we need to fetch them separately
-// bibkeys allow us to fetch multiple books at once
-async function fetchPages(editionKeys, start) {
-  const chunk = editionKeys.slice(start, start + 100);
-  const bibkeys = chunk
-    .map((k) => `OLID:${k.replace("/books/", "")}`)
-    .join(",");
-  const url = `https://openlibrary.org/api/books?bibkeys=${bibkeys}&format=json&jscmd=data`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch batch pages via api/books");
-  const data = await res.json();
-
-  const results = [];
-  for (const key in data) {
-    results.push({
-      edition: key,
-      pages: data[key].number_of_pages || null,
-    });
-  }
-  return results;
-}
-
-async function fetchAllPages(editionKeys, chunkSize = 100) {
-  const tasks = [];
-  for (let i = 0; i < editionKeys.length; i += chunkSize) {
-    tasks.push(fetchPages(editionKeys, i));
-  }
-  const results = await Promise.all(tasks);
-  return results.flat();
-}
-
-// Initialize Books fonksiyonu
-async function initializeBooks() {
-  if (bookCache) {
-    return bookCache;
-  }
-  [foreverBooks, yearlyBooks] = await Promise.all([
-    getTrending("alltime", 100),
-    getTrending("yearly", 100),
-  ]);
-  // instead of using promise we could use await in combined
-  const combined = [...foreverBooks, ...yearlyBooks];
-  const editionKeys = combined
-    .map((b) => b.editions?.docs?.[0]?.key)
-    .filter(Boolean);
-
-  const pagesApiBooks = await fetchAllPages(editionKeys);
-
-  //const pagesApiBooks = [...first, ...second];
-  const books = combined.map((book) => {
-    const editionKey = book.editions?.docs?.[0]?.key;
-
-    const fromApiBooks = pagesApiBooks.find((p) =>
-      editionKey ? p.edition.includes(editionKey.replace("/books/", "")) : false
-    );
-    return {
-      title: book.title || null,
-      author: book.author_name || null,
-      year: book.first_publish_year || null,
-      pages: fromApiBooks ? fromApiBooks.pages : null,
-    };
-  });
-  bookCache = books;
-  return books;
-}
+// initializeBooks now provided by services/books
 
 app.get("/", (req, res) => {
   console.log(req.route);
@@ -132,7 +53,7 @@ app.get("/contact", (req, res) => {
 app.get("/reviews", (req, res) => {
   console.log(req.route);
   res.status(200);
-  res.send("reviews");
+  res.sendFile(path.join(__dirname, "Public", "Reviews", "index.html"));
   res.end();
 });
 app.get("/favorites", (req, res) => {
@@ -181,4 +102,4 @@ const connectDB = async () => {
 // Uygulama başlamadan önce veritabanına bağlan
 connectDB();
 
-module.exports = { initializeBooks };
+// No exports from app.js; services/books provides initializeBooks

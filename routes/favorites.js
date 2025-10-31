@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const auth = require("../middleware/auth");
+const { initializeBooks } = require("../services/books");
 
 // Tüm favorileri getir
 router.get("/", auth, async (req, res) => {
@@ -36,16 +37,30 @@ router.get("/popular", async (req, res) => {
       });
     });
 
-    // Popülerliğe göre sırala ve ilk 25'i al
+    // Home list meta (author/year/pages)
+    const homeBooks = await initializeBooks();
+    const byTitle = new Map();
+    homeBooks.forEach((b) => {
+      if (b && b.title) {
+        if (!byTitle.has(b.title)) byTitle.set(b.title, b);
+      }
+    });
+
+    // Popülerliğe göre sırala ve ilk 34'ü al, metadata ile zenginleştir
     const popularBooks = Object.values(bookPopularity)
       .sort((a, b) => b.count - a.count)
       .slice(0, 34)
-      .map((book) => ({
-        title: book.title,
-        author: book.author,
-        bookId: book.bookId,
-        favoriteCount: book.count,
-      }));
+      .map((book) => {
+        const meta = byTitle.get(book.title) || {};
+        return {
+          title: book.title,
+          author: book.author || meta.author || null,
+          bookId: book.bookId,
+          favoriteCount: book.count,
+          year: meta.year || null,
+          pages: meta.pages || null,
+        };
+      });
 
     res.json(popularBooks);
   } catch (error) {

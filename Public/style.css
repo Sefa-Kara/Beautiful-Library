@@ -402,6 +402,10 @@ body {
   border: 3px solid #8b6914;
 }
 
+.review-modal {
+  max-width: 600px;
+}
+
 @keyframes slideIn {
   from {
     transform: translateY(-50px);
@@ -427,6 +431,62 @@ body {
 .close:hover {
   color: #3a2a0a;
   transform: rotate(90deg);
+}
+
+/* Review form */
+.review-form {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.review-form textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 12px;
+  border: 2px solid #8b6914;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #3a2a0a;
+  background: rgba(244, 228, 188, 0.9);
+}
+
+.rating {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+.rating span {
+  font-size: 28px;
+  cursor: pointer;
+  color: #bca76a;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.rating span.active,
+.rating span:hover,
+.rating span:hover ~ span {
+  color: #d4af37;
+  transform: scale(1.1);
+}
+
+.review-submit-btn {
+  align-self: flex-end;
+  background: #8b6914;
+  color: #f4e4bc;
+  border: 2px solid #8b6914;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.review-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
 .book-details h2 {

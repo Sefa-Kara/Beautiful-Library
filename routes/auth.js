@@ -90,7 +90,8 @@ router.post("/login", async (req, res) => {
         name: user.name,
         surname: user.surname,
         email: user.email,
-        favorites: user.favorites, // Tüm favori bilgilerini gönder
+      favorites: user.favorites, // Tüm favori bilgilerini gönder
+      reviews: user.reviews,
       },
     });
   } catch (error) {

@@ -28,17 +28,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    // Normal sayfa yükleme işlemleri
-    allBooks = await fetchBooks();
-    console.log("Fetched books:", allBooks.length); // Kontrol amaçlı log
-    if (!Array.isArray(allBooks) || allBooks.length === 0) {
-      console.error("No books loaded");
-      return;
+    // Only initialize main library if bookshelf container exists
+    const wrapper = document.getElementById("bookshelfWrapper");
+    const shelfIndicators = document.getElementById("shelfIndicators");
+    const isMainPage = !!(wrapper && shelfIndicators);
+
+    if (isMainPage) {
+      allBooks = await fetchBooks();
+      console.log("Fetched books:", allBooks.length);
+      if (!Array.isArray(allBooks) || allBooks.length === 0) {
+        console.error("No books loaded");
+        return;
+      }
+      initLibrary();
     }
-    initLibrary();
   } catch (error) {
     console.error("Error loading books:", error);
-    document.getElementById("loading").textContent = "Error loading library...";
+    const loadingEl = document.getElementById("loading");
+    if (loadingEl) loadingEl.textContent = "Error loading library...";
   }
 });
 
@@ -121,6 +128,7 @@ function createShelves() {
 // Create shelf indicators
 function createShelfIndicators() {
   const indicatorsContainer = document.getElementById("shelfIndicators");
+  if (!indicatorsContainer) return;
   indicatorsContainer.innerHTML = "";
 
   shelfLetters.forEach((letter, index) => {
@@ -697,6 +705,7 @@ async function showBookDetails(book) {
   const token = localStorage.getItem("token");
   const userData = localStorage.getItem("user");
   let isFavorite = false;
+  let isReviewed = false;
 
   if (token && userData) {
     try {
@@ -731,6 +740,19 @@ async function showBookDetails(book) {
           localStorage.setItem("user", JSON.stringify(user));
         }
       }
+      // Review kontrolü
+      try {
+        const reviewResp = await fetch("/api/reviews/check", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ bookId: book.title }),
+        });
+        const reviewData = await reviewResp.json();
+        isReviewed = !!reviewData.isReviewed;
+      } catch (_) {}
     } catch (e) {
       console.error("Error checking favorite status:", e);
     }
@@ -747,6 +769,17 @@ async function showBookDetails(book) {
             <i class="fas fa-star"></i>
             <span class="tooltip">${
               isFavorite ? "Remove from favorites" : "Add to favorites"
+            }</span>
+        </button>
+        <button class="favorite-btn review-btn ${isReviewed ? "active" : ""}" 
+                ${isReviewed ? "disabled" : ""}
+                onclick="openReviewModal('${book.title}', '${
+    book.author || "Unknown Author"
+  }')"
+                data-bookid="${book.title}">
+            <i class="fas fa-pen"></i>
+            <span class="tooltip">${
+              isReviewed ? "Already reviewed" : "Add review"
             }</span>
         </button>
     </div>
@@ -852,4 +885,116 @@ function redirectToLogin() {
   // Save current page URL to localStorage to redirect back after login
   localStorage.setItem("returnUrl", window.location.pathname);
   window.location.href = "/login";
+}
+
+// Review Modal logic
+let currentReviewContext = { bookId: null, author: null, rating: 0 };
+
+function ensureReviewModalSetup() {
+  const modal = document.getElementById("reviewModal");
+  if (!modal || modal.dataset.bound === "true") return;
+  const stars = Array.from(document.querySelectorAll("#reviewStars span"));
+  stars.forEach((star) => {
+    star.addEventListener("click", () => {
+      const val = parseInt(star.dataset.value, 10);
+      currentReviewContext.rating = val;
+      stars.forEach((s) => {
+        s.classList.toggle("active", parseInt(s.dataset.value, 10) <= val);
+      });
+    });
+  });
+
+  document.getElementById("closeReviewModal").addEventListener("click", () => {
+    modal.classList.remove("show");
+  });
+
+  window.addEventListener("click", (e) => {
+    if (e.target === modal) modal.classList.remove("show");
+  });
+
+  document
+    .getElementById("submitReviewBtn")
+    .addEventListener("click", submitReviewFromModal);
+  modal.dataset.bound = "true";
+}
+
+function openReviewModal(bookId, author) {
+  const token = localStorage.getItem("token");
+  const userData = localStorage.getItem("user");
+  if (!token || !userData) {
+    showLoginAlert();
+    return;
+  }
+  ensureReviewModalSetup();
+  currentReviewContext = { bookId, author, rating: 0 };
+  const modal = document.getElementById("reviewModal");
+  const textarea = document.getElementById("reviewText");
+  textarea.value = "";
+  document
+    .querySelectorAll("#reviewStars span")
+    .forEach((s) => s.classList.remove("active"));
+  modal.classList.add("show");
+}
+
+async function submitReviewFromModal() {
+  const token = localStorage.getItem("token");
+  const userData = localStorage.getItem("user");
+  if (!token || !userData) {
+    showLoginAlert();
+    return;
+  }
+  const text = document.getElementById("reviewText").value.trim();
+  const rating = currentReviewContext.rating || 0;
+  if (!text) {
+    showNotification("Please write a review", "error");
+    return;
+  }
+  if (rating < 1 || rating > 5) {
+    showNotification("Please select a star rating", "error");
+    return;
+  }
+  const { bookId } = currentReviewContext;
+  try {
+    const response = await fetch("/api/reviews", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ bookId, title: bookId, review: text, rating }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to submit review");
+    }
+
+    // Disable review button in book modal
+    const btn = document.querySelector(
+      `.review-btn[data-bookid="${CSS.escape(bookId)}"]`
+    );
+    if (btn) {
+      btn.classList.add("active");
+      btn.setAttribute("disabled", "true");
+      const tooltip = btn.querySelector(".tooltip");
+      if (tooltip) tooltip.textContent = "Already reviewed";
+    }
+
+    // Update local user cache
+    const user = JSON.parse(userData);
+    user.reviews = user.reviews || [];
+    user.reviews.push({
+      bookId,
+      title: bookId,
+      review: text,
+      rating,
+      dateReviewed: new Date().toISOString(),
+    });
+    localStorage.setItem("user", JSON.stringify(user));
+
+    document.getElementById("reviewModal").classList.remove("show");
+    showNotification("Review submitted");
+  } catch (e) {
+    console.error(e);
+    showNotification(e.message || "Failed to submit review", "error");
+  }
 }
