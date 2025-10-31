@@ -82,6 +82,7 @@ router.post("/login", async (req, res) => {
       expiresIn: "24h",
     });
 
+    // Kullanıcının tüm bilgilerini gönder
     res.json({
       token,
       user: {
@@ -89,6 +90,7 @@ router.post("/login", async (req, res) => {
         name: user.name,
         surname: user.surname,
         email: user.email,
+        favorites: user.favorites, // Tüm favori bilgilerini gönder
       },
     });
   } catch (error) {

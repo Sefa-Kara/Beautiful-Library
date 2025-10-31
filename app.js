@@ -148,9 +148,7 @@ app.get("/login", (req, res) => {
   res.end();
 });
 app.get("/register", (req, res) => {
-  res.status(200);
   res.sendFile(path.join(__dirname, "Public", "Register", "index.html"));
-  res.end();
 });
 app.use((req, res) => {
   console.log(req.route);

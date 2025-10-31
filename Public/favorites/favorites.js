@@ -309,37 +309,154 @@ function adjustColor(color, amount) {
   );
 }
 
-function showBookDetails(book) {
-  const modal = document.getElementById("bookModal");
-  const details = document.getElementById("bookDetails");
-
+// toggleFavorite fonksiyonunu ekleyelim
+async function toggleFavorite(bookId, author) {
+  const token = localStorage.getItem("token");
   const userData = localStorage.getItem("user");
-  let user = null;
-  try {
-    user = JSON.parse(userData);
-  } catch (e) {
-    console.error("Invalid user data in localStorage");
+
+  if (!token || !userData) {
+    showLoginAlert();
+    return;
   }
 
-  const isFavorite = user?.favorites?.some((fav) => fav.bookId === book.title);
+  try {
+    let user = JSON.parse(userData);
+    const button = document.querySelector(
+      `.favorite-btn[data-bookid="${CSS.escape(bookId)}"]`
+    );
+    const isCurrentlyFavorite = button.classList.contains("active");
 
-  details.innerHTML = `
-        <h2>${book.title}</h2>
-        <div class="book-header">
-            <button class="favorite-btn ${isFavorite ? "active" : ""}" 
-                    onclick="toggleFavorite('${book.title}', '${
-    book.author || "Unknown Author"
-  }')"
-                    data-bookid="${book.title}">
-                <i class="fas fa-star"></i>
-            </button>
-        </div>
-        <p><strong>Author:</strong> ${book.author || "Unknown Author"}</p>
-        <p><strong>Favorite Count:</strong> ${book.favoriteCount || 0}</p>
-    `;
+    const response = await fetch("/api/favorites", {
+      method: isCurrentlyFavorite ? "DELETE" : "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        bookId,
+        title: bookId, // bookId olarak title kullanıyoruz
+        author,
+        dateAdded: new Date(),
+      }),
+    });
 
-  modal.classList.add("show");
+    if (!response.ok) {
+      throw new Error("Failed to update favorites");
+    }
+
+    // Buton durumunu güncelle
+    button.classList.toggle("active");
+
+    // Kitabın güncel favori durumunu API'den al
+    const popularResponse = await fetch("/api/favorites/popular");
+    const updatedPopularBooks = await popularResponse.json();
+
+    if (isCurrentlyFavorite) {
+      // Favorilerden çıkar
+      user.favorites = user.favorites.filter((fav) => fav.bookId !== bookId);
+      showNotification("Kitap favorilerinizden çıkarıldı");
+
+      // Popüler kitaplar listesini güncelle
+      const updatedBook = updatedPopularBooks.find(
+        (book) => book.bookId === bookId
+      );
+      const bookIndex = popularBooks.findIndex((book) => book.title === bookId);
+
+      if (bookIndex !== -1) {
+        if (updatedBook) {
+          // Kitap hala popüler listesinde varsa, sayısını güncelle
+          popularBooks[bookIndex].favoriteCount = updatedBook.favoriteCount;
+        } else {
+          // Kitap artık popüler değilse listeden kaldır
+          popularBooks.splice(bookIndex, 1);
+        }
+      }
+    } else {
+      // Favorilere ekle
+      if (!user.favorites) user.favorites = [];
+      user.favorites.push({ bookId, title: bookId, author });
+      showNotification("Kitap favorilerinize eklendi");
+
+      // Popüler kitaplar listesini güncelle
+      const updatedBook = updatedPopularBooks.find(
+        (book) => book.bookId === bookId
+      );
+      const bookIndex = popularBooks.findIndex((book) => book.title === bookId);
+
+      if (updatedBook) {
+        if (bookIndex !== -1) {
+          popularBooks[bookIndex].favoriteCount = updatedBook.favoriteCount;
+        } else {
+          popularBooks.push(updatedBook);
+        }
+      }
+    }
+
+    // localStorage'ı güncelle
+    localStorage.setItem("user", JSON.stringify(user));
+
+    // Sayfayı yeniden render et
+    popularBooks = popularBooks.sort(
+      (a, b) => b.favoriteCount - a.favoriteCount
+    );
+    renderFavoriteBooks(popularBooks);
+
+    // Kitap detayları modalı açıksa, oradaki favori sayısını da güncelle
+    const bookDetailsElement = document.getElementById("bookDetails");
+    if (bookDetailsElement.style.display !== "none") {
+      const favoriteCountElement =
+        bookDetailsElement.querySelector("p:last-child");
+      const updatedBook = popularBooks.find((book) => book.title === bookId);
+      if (favoriteCountElement && updatedBook) {
+        favoriteCountElement.innerHTML = `<strong>Favorite Count:</strong> ${updatedBook.favoriteCount}`;
+      }
+    }
+  } catch (error) {
+    console.error("Error updating favorites:", error);
+    showNotification("Bir hata oluştu. Lütfen tekrar deneyin.", "error");
+  }
 }
+
+// Bildirim gösterme fonksiyonu
+function showNotification(message, type = "success") {
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+
+  document.body.appendChild(notification);
+
+  // 3 saniye sonra bildirimi kaldır
+  setTimeout(() => {
+    notification.style.opacity = "0";
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
+
+// CSS için stil ekleyelim
+const notificationStyle = document.createElement("style");
+notificationStyle.textContent = `
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+  z-index: 1000;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.notification.success {
+  background-color: #4caf50;
+}
+
+.notification.error {
+  background-color: #f44336;
+}
+`;
+document.head.appendChild(notificationStyle);
 
 // Modal kapama işlemleri
 document.getElementById("closeModal").addEventListener("click", () => {
@@ -386,3 +503,45 @@ function highlightBook(book) {
     }
   });
 }
+
+// CSS için stil ekleyelim
+const style = document.createElement("style");
+style.textContent = `
+.favorite-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5em;
+    color: #ccc;
+    transition: all 0.3s ease;
+    padding: 5px 10px;
+    position: relative;
+}
+
+.favorite-btn.active {
+    color: #ffd700;
+}
+
+.favorite-btn:hover {
+    transform: scale(1.1);
+}
+
+.favorite-btn .tooltip {
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    display: none;
+}
+
+.favorite-btn:hover .tooltip {
+    display: block;
+}
+`;
+document.head.appendChild(style);

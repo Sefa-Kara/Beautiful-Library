@@ -39,7 +39,7 @@ router.get("/popular", async (req, res) => {
     // Popülerliğe göre sırala ve ilk 25'i al
     const popularBooks = Object.values(bookPopularity)
       .sort((a, b) => b.count - a.count)
-      .slice(0, 25)
+      .slice(0, 34)
       .map((book) => ({
         title: book.title,
         author: book.author,
@@ -83,6 +83,20 @@ router.delete("/", auth, async (req, res) => {
     await user.save();
 
     res.json({ message: "Removed from favorites" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// Favori durumu kontrolü için yeni endpoint
+router.post("/check", auth, async (req, res) => {
+  try {
+    const { bookId } = req.body;
+    const user = await User.findById(req.userId);
+
+    const isFavorite = user.favorites.some((fav) => fav.bookId === bookId);
+
+    res.json({ isFavorite });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

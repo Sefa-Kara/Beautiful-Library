@@ -147,7 +147,7 @@ class SoftMinimalismRegisterForm {
   }
 
   async handleSubmit(e) {
-    e.preventDefault();
+    e.preventDefault(); // Form'un default davranışını engelle
 
     const formData = {
       name: this.nameInput.value.trim(),
@@ -157,8 +157,6 @@ class SoftMinimalismRegisterForm {
     };
 
     if (!this.validateAll(formData)) return;
-
-    this.setLoading(true);
 
     try {
       const response = await fetch("/api/auth/register", {
@@ -175,22 +173,15 @@ class SoftMinimalismRegisterForm {
         throw new Error(data.message || "Registration failed");
       }
 
-      // Başarılı kayıt
+      // Başarılı kayıt durumunda
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      // Başarılı mesajı göster
-      this.showSuccess();
-
-      // 2 saniye sonra ana sayfaya yönlendir
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 2000);
+      // Ana sayfaya yönlendir
+      window.location.href = "/";
     } catch (error) {
       console.error("Registration error:", error);
       this.showError("email", error.message);
-    } finally {
-      this.setLoading(false);
     }
   }
 
@@ -250,3 +241,8 @@ class SoftMinimalismRegisterForm {
     }, 300);
   }
 }
+
+// En sonda ekleyin
+document.addEventListener("DOMContentLoaded", () => {
+  new SoftMinimalismRegisterForm();
+});

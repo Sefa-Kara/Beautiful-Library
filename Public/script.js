@@ -6,6 +6,29 @@ async function fetchBooks() {
 let allBooks = [];
 document.addEventListener("DOMContentLoaded", async () => {
   try {
+    // Mevcut kullanıcı bilgilerini güncelle
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const response = await fetch("/api/favorites", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const favorites = await response.json();
+          const userData = JSON.parse(localStorage.getItem("user"));
+          if (userData) {
+            userData.favorites = favorites;
+            localStorage.setItem("user", JSON.stringify(userData));
+          }
+        }
+      } catch (e) {
+        console.error("Error updating favorites:", e);
+      }
+    }
+
+    // Normal sayfa yükleme işlemleri
     allBooks = await fetchBooks();
     console.log("Fetched books:", allBooks.length); // Kontrol amaçlı log
     if (!Array.isArray(allBooks) || allBooks.length === 0) {
@@ -666,30 +689,65 @@ window.addEventListener("resize", () => {
 });
 
 // showBookDetails fonksiyonunu güncelleyelim
-function showBookDetails(book) {
+async function showBookDetails(book) {
   const modal = document.getElementById("bookModal");
   const details = document.getElementById("bookDetails");
 
+  // Kullanıcı ve favori durumunu kontrol et
+  const token = localStorage.getItem("token");
   const userData = localStorage.getItem("user");
-  let user = null;
-  try {
-    user = JSON.parse(userData);
-  } catch (e) {
-    console.error("Invalid user data in localStorage");
+  let isFavorite = false;
+
+  if (token && userData) {
+    try {
+      const user = JSON.parse(userData);
+      // Favori kontrolü
+      isFavorite = user.favorites?.some((fav) => fav.bookId === book.title);
+
+      // Eğer localStorage'daki veri güncel değilse API'den kontrol et
+      if (isFavorite === undefined) {
+        const response = await fetch("/api/favorites/check", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ bookId: book.title }),
+        });
+        const data = await response.json();
+        isFavorite = data.isFavorite;
+
+        // localStorage'ı güncelle
+        if (
+          isFavorite &&
+          !user.favorites?.some((fav) => fav.bookId === book.title)
+        ) {
+          user.favorites = user.favorites || [];
+          user.favorites.push({
+            bookId: book.title,
+            title: book.title,
+            author: book.author,
+          });
+          localStorage.setItem("user", JSON.stringify(user));
+        }
+      }
+    } catch (e) {
+      console.error("Error checking favorite status:", e);
+    }
   }
 
-  const isFavorite = user?.favorites?.some((fav) => fav.bookId === book.title);
-
-  // Tırnak işaretlerini template literal kullanarak düzeltelim
   details.innerHTML = `
     <h2>${book.title}</h2>
     <div class="book-header">
         <button class="favorite-btn ${isFavorite ? "active" : ""}" 
-                onclick="toggleFavorite(\`${book.title}\`, \`${
+                onclick="toggleFavorite('${book.title}', '${
     book.author || "Unknown Author"
-  }\`)"
+  }')"
                 data-bookid="${book.title}">
             <i class="fas fa-star"></i>
+            <span class="tooltip">${
+              isFavorite ? "Remove from favorites" : "Add to favorites"
+            }</span>
         </button>
     </div>
     <p><strong>Author:</strong> ${book.author || "Unknown Author"}</p>
