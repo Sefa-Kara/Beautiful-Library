@@ -41,6 +41,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
       initLibrary();
+
+      // Check if we need to navigate to a book (from About/Contact pages)
+      const navigateToBookData = localStorage.getItem("navigateToBook");
+      if (navigateToBookData) {
+        try {
+          const book = JSON.parse(navigateToBookData);
+          localStorage.removeItem("navigateToBook");
+          // Wait for library to initialize, then navigate
+          setTimeout(() => {
+            navigateToBook(book);
+          }, 500);
+        } catch (e) {
+          console.error("Error parsing navigateToBook:", e);
+        }
+      }
     }
   } catch (error) {
     console.error("Error loading books:", error);

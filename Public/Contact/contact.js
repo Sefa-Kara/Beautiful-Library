@@ -1,0 +1,430 @@
+document.addEventListener("DOMContentLoaded", async () => {
+  // Setup user dropdown
+  setupUserDropdown();
+
+  // Load books first, then setup search
+  try {
+    const books = await fetchBooks();
+    console.log("Contact page: Loaded", books.length, "books");
+    if (books.length === 0) {
+      console.warn("Contact page: No books loaded!");
+    }
+    setupSearch(books);
+  } catch (error) {
+    console.error("Contact page: Error loading books:", error);
+  }
+
+  // Setup contact form
+  setupContactForm();
+
+  // Add scroll animations
+  setupScrollAnimations();
+});
+
+// User dropdown functionality
+function setupUserDropdown() {
+  const profile = document.getElementById("userProfile");
+  const dropdown = document.getElementById("userDropdown");
+  const dropdownHeader = document.getElementById("dropdownHeader");
+  const dropdownMenu = document.getElementById("dropdownMenu");
+
+  function isUserLoggedIn() {
+    return localStorage.getItem("user") !== null;
+  }
+
+  function updateDropdownContent() {
+    if (isUserLoggedIn()) {
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      profile.innerHTML = `
+        <div class="user-avatar">${user.name.charAt(0)}${user.surname.charAt(
+        0
+      )}</div>
+        <span class="user-name">${user.name} ${user.surname}</span>
+        <i class="fas fa-chevron-down"></i>
+      `;
+
+      dropdownHeader.innerHTML = `
+        <h3>${user.name} ${user.surname}</h3>
+        <p>${user.membershipType || "Standard Member"}</p>
+      `;
+
+      dropdownMenu.innerHTML = `
+        <li><a href="/profile"><i class="fas fa-user"></i> My Profile</a></li>
+        <li><a href="/favorites"><i class="fas fa-bookmark"></i> My Favorites</a></li>
+        <li><a href="/history"><i class="fas fa-history"></i> Reading History</a></li>
+        <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
+        <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+      `;
+    } else {
+      profile.innerHTML = `
+        <div class="user-avatar"><i class="fas fa-user"></i></div>
+        <span class="user-name">Guest</span>
+        <i class="fas fa-chevron-down"></i>
+      `;
+
+      dropdownHeader.innerHTML = `
+        <h3>Welcome, Guest</h3>
+        <p>Please login to continue</p>
+      `;
+
+      dropdownMenu.innerHTML = `
+        <li><a href="/login"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+        <li><a href="/register"><i class="fas fa-user-plus"></i> Register</a></li>
+      `;
+    }
+  }
+
+  window.logout = function () {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    updateDropdownContent();
+    window.location.href = "/login";
+  };
+
+  profile.addEventListener("click", () => {
+    dropdown.classList.toggle("show");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (
+      !e.target.closest("#userProfile") &&
+      !e.target.closest("#userDropdown")
+    ) {
+      dropdown.classList.remove("show");
+    }
+  });
+
+  updateDropdownContent();
+  window.addEventListener("storage", (e) => {
+    if (e.key === "user") {
+      updateDropdownContent();
+    }
+  });
+}
+
+// Fetch books from API
+async function fetchBooks() {
+  try {
+    const res = await fetch("/books");
+    return await res.json();
+  } catch (error) {
+    console.error("Error fetching books:", error);
+    return [];
+  }
+}
+
+// Search functionality
+function setupSearch(books) {
+  const searchInput = document.getElementById("searchInput");
+  const suggestionsContainer = document.getElementById("searchSuggestions");
+
+  if (!searchInput || !suggestionsContainer) {
+    console.error("Search elements not found");
+    return;
+  }
+
+  if (!books || books.length === 0) {
+    console.warn("Books not loaded yet, search may not work");
+  }
+
+  let debounceTimer;
+
+  searchInput.addEventListener("input", (e) => {
+    clearTimeout(debounceTimer);
+    const searchTerm = e.target.value.trim().toLowerCase();
+
+    if (searchTerm.length < 2) {
+      suggestionsContainer.style.display = "none";
+      return;
+    }
+
+    // Check if books are loaded
+    if (!books || books.length === 0) {
+      suggestionsContainer.innerHTML =
+        '<div class="no-suggestions">Loading books...</div>';
+      suggestionsContainer.style.display = "block";
+      return;
+    }
+
+    debounceTimer = setTimeout(() => {
+      const matchingBooks = books
+        .filter(
+          (book) =>
+            (book.title && book.title.toLowerCase().includes(searchTerm)) ||
+            (book.author &&
+              book.author.toString().toLowerCase().includes(searchTerm))
+        )
+        .slice(0, 5);
+
+      if (matchingBooks.length === 0) {
+        suggestionsContainer.innerHTML =
+          '<div class="no-suggestions">No books found</div>';
+      } else {
+        const html = matchingBooks
+          .map((book) => {
+            const escapedTitle = escapeHtml(book.title);
+            const escapedAuthor = escapeHtml(book.author || "Unknown Author");
+            // Escape quotes in data attribute
+            const safeTitle = (book.title || "").replace(/"/g, "&quot;");
+            return `
+              <div class="suggestion-item" data-title="${safeTitle}">
+                <div class="title">${highlightMatch(
+                  escapedTitle,
+                  searchTerm
+                )}</div>
+                <div class="author">by ${escapedAuthor}</div>
+              </div>
+            `;
+          })
+          .join("");
+
+        suggestionsContainer.innerHTML = html;
+
+        // Add click handlers to suggestions
+        const suggestionItems =
+          suggestionsContainer.querySelectorAll(".suggestion-item");
+        suggestionItems.forEach((item) => {
+          item.addEventListener("click", () => {
+            const title = item.dataset.title;
+            const selectedBook = matchingBooks.find((b) => b.title === title);
+            if (selectedBook) {
+              // Store book data to navigate on home page
+              localStorage.setItem(
+                "navigateToBook",
+                JSON.stringify(selectedBook)
+              );
+              // Navigate to home page
+              window.location.href = "/";
+            }
+          });
+        });
+      }
+
+      suggestionsContainer.style.display = "block";
+    }, 300);
+  });
+
+  // Highlight matching text
+  function highlightMatch(text, searchTerm) {
+    const regex = new RegExp(`(${escapeRegex(searchTerm)})`, "gi");
+    return text.replace(regex, "<strong>$1</strong>");
+  }
+
+  // Escape HTML
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Escape regex special characters
+  function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  // Focus event listener
+  searchInput.addEventListener("focus", () => {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    if (searchTerm.length >= 2) {
+      suggestionsContainer.style.display = "block";
+    }
+  });
+
+  // Close suggestions when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".search-container")) {
+      suggestionsContainer.style.display = "none";
+    }
+  });
+
+  // Enter key handler
+  searchInput.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+      const firstSuggestion =
+        suggestionsContainer.querySelector(".suggestion-item");
+      if (firstSuggestion) {
+        const title = firstSuggestion.dataset.title;
+        if (books && books.length > 0) {
+          const selectedBook = books.find((b) => b.title === title);
+          if (selectedBook) {
+            // Store book data to navigate on home page
+            localStorage.setItem(
+              "navigateToBook",
+              JSON.stringify(selectedBook)
+            );
+            // Navigate to home page
+            window.location.href = "/";
+          }
+        }
+      }
+    }
+  });
+}
+
+// Copy to clipboard function
+window.copyToClipboard = function (text, element) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        showCopyFeedback(element);
+      })
+      .catch(() => {
+        fallbackCopyToClipboard(text, element);
+      });
+  } else {
+    fallbackCopyToClipboard(text, element);
+  }
+};
+
+function fallbackCopyToClipboard(text, element) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed";
+  textArea.style.opacity = "0";
+  document.body.appendChild(textArea);
+  textArea.select();
+  try {
+    document.execCommand("copy");
+    showCopyFeedback(element);
+  } catch (err) {
+    console.error("Failed to copy:", err);
+  }
+  document.body.removeChild(textArea);
+}
+
+function showCopyFeedback(element) {
+  const hint = element.querySelector(".copy-hint");
+  if (hint) {
+    const originalText = hint.textContent;
+    hint.textContent = "Copied!";
+    hint.style.color = "#d4af37";
+    setTimeout(() => {
+      hint.textContent = originalText;
+      hint.style.color = "#8b6914";
+    }, 2000);
+  }
+}
+
+// Contact form functionality
+function setupContactForm() {
+  const form = document.getElementById("contactForm");
+  const submitBtn = form.querySelector(".submit-btn");
+  const formMessage = document.getElementById("formMessage");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    // Get form data
+    const formData = {
+      name: form.querySelector("#formName").value.trim(),
+      email: form.querySelector("#formEmail").value.trim(),
+      subject: form.querySelector("#formSubject").value.trim(),
+      message: form.querySelector("#formMessage").value.trim(),
+    };
+
+    // Validate
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.subject ||
+      !formData.message
+    ) {
+      showFormMessage("Please fill in all fields", "error");
+      return;
+    }
+
+    // Show loading state
+    submitBtn.classList.add("loading");
+
+    // Simulate form submission (since we don't have a backend endpoint)
+    // In a real application, you would send this to your server
+    setTimeout(() => {
+      // Simulate successful submission
+      showFormMessage(
+        `Thank you, ${formData.name}! Your message has been received. I'll get back to you at ${formData.email} soon.`,
+        "success"
+      );
+
+      // Reset form
+      form.reset();
+
+      // Remove loading state
+      submitBtn.classList.remove("loading");
+
+      // Note: In a real application, you would make an API call here:
+      // try {
+      //   const response = await fetch('/api/contact', {
+      //     method: 'POST',
+      //     headers: { 'Content-Type': 'application/json' },
+      //     body: JSON.stringify(formData)
+      //   });
+      //   const data = await response.json();
+      //   if (response.ok) {
+      //     showFormMessage('Thank you! Your message has been sent.', 'success');
+      //     form.reset();
+      //   } else {
+      //     showFormMessage('Error sending message. Please try again.', 'error');
+      //   }
+      // } catch (error) {
+      //   showFormMessage('Error sending message. Please try again.', 'error');
+      // } finally {
+      //   submitBtn.classList.remove('loading');
+      // }
+    }, 1500);
+  });
+}
+
+function showFormMessage(message, type) {
+  const formMessage = document.getElementById("formMessage");
+  formMessage.textContent = message;
+  formMessage.className = `form-message ${type}`;
+
+  // Scroll to message
+  formMessage.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+  // Auto-hide after 5 seconds for success messages
+  if (type === "success") {
+    setTimeout(() => {
+      formMessage.style.display = "none";
+    }, 5000);
+  }
+}
+
+// Scroll animations
+function setupScrollAnimations() {
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: "0px 0px -50px 0px",
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = "1";
+        entry.target.style.transform = "translateY(0)";
+      }
+    });
+  }, observerOptions);
+
+  // Observe all sections
+  const sections = document.querySelectorAll(".contact-section");
+  sections.forEach((section) => {
+    section.style.opacity = "0";
+    section.style.transform = "translateY(30px)";
+    section.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+    observer.observe(section);
+  });
+
+  // Observe contact cards
+  const cards = document.querySelectorAll(".contact-card, .info-card");
+  cards.forEach((card, index) => {
+    card.style.opacity = "0";
+    card.style.transform = "translateY(20px)";
+    card.style.transition = `opacity 0.6s ease ${
+      index * 0.1
+    }s, transform 0.6s ease ${index * 0.1}s`;
+    observer.observe(card);
+  });
+}

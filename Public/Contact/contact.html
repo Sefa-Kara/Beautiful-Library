@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact - Digital Library</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./contact.css" />
+  </head>
+  <body>
+    <script>
+      // Disable home shelves init on this page
+      window.initLibrary = null;
+      window.createShelves = null;
+      window.loadBooks = null;
+      window.setupDragging = null;
+    </script>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+      <div class="logo">
+        <i class="fas fa-book-open"></i>
+        <span>DigitalLibrary</span>
+      </div>
+
+      <ul class="nav-links">
+        <li>
+          <a href="/"><i class="fas fa-home"></i> Home</a>
+        </li>
+        <li>
+          <a href="/favorites"><i class="fas fa-bookmark"></i> Favorites</a>
+        </li>
+        <li>
+          <a href="/reviews"><i class="fas fa-star"></i> Reviews</a>
+        </li>
+        <li>
+          <a href="/about"><i class="fas fa-info-circle"></i> About</a>
+        </li>
+        <li>
+          <a href="/contact" class="active"><i class="fas fa-phone"></i> Contact</a>
+        </li>
+      </ul>
+
+      <div class="search-container">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search for books, authors..."
+          autocomplete="off"
+        />
+        <div class="search-suggestions" id="searchSuggestions"></div>
+      </div>
+
+      <div class="user-profile" id="userProfile">
+        <div class="user-avatar"><i class="fas fa-user"></i></div>
+        <span class="user-name">Guest</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+    </nav>
+
+    <!-- User Dropdown -->
+    <div class="user-dropdown" id="userDropdown">
+      <div class="dropdown-header" id="dropdownHeader"></div>
+      <ul class="dropdown-menu" id="dropdownMenu"></ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="contact-container">
+      <div class="contact-hero">
+        <div class="hero-content">
+          <h1 class="hero-title">
+            <i class="fas fa-envelope"></i> Get In Touch
+          </h1>
+          <p class="hero-subtitle">Let's connect and discuss your next project</p>
+        </div>
+      </div>
+
+      <div class="contact-content">
+        <!-- Contact Information -->
+        <section class="contact-section">
+          <div class="section-icon">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <h2 class="section-title">Contact Information</h2>
+          <p class="section-description">
+            Feel free to reach out through any of the channels below. I'm always open to 
+            discussing new opportunities, projects, or collaborations.
+          </p>
+
+          <div class="contact-cards">
+            <div class="contact-card">
+              <div class="card-icon">
+                <i class="fas fa-user"></i>
+              </div>
+              <h3>Name</h3>
+              <p>Mustafa Sefa Kara</p>
+            </div>
+
+            <div class="contact-card clickable" onclick="copyToClipboard('mustafasefakara7@gmail.com', this)">
+              <div class="card-icon">
+                <i class="fas fa-envelope"></i>
+              </div>
+              <h3>Email</h3>
+              <p class="contact-link">mustafasefakara7@gmail.com</p>
+              <span class="copy-hint">Click to copy</span>
+            </div>
+
+            <div class="contact-card clickable" onclick="window.open('https://github.com/Sefa-Kara', '_blank')">
+              <div class="card-icon">
+                <i class="fab fa-github"></i>
+              </div>
+              <h3>GitHub</h3>
+              <p class="contact-link">github.com/Sefa-Kara</p>
+              <span class="link-hint">Click to visit</span>
+            </div>
+
+            <div class="contact-card clickable" onclick="window.open('https://www.linkedin.com/in/mustafasefakara/', '_blank')">
+              <div class="card-icon">
+                <i class="fab fa-linkedin"></i>
+              </div>
+              <h3>LinkedIn</h3>
+              <p class="contact-link">linkedin.com/in/mustafasefakara</p>
+              <span class="link-hint">Click to visit</span>
+            </div>
+
+            <div class="contact-card clickable" onclick="window.open('https://mustafasefakara.biz.com', '_blank')">
+              <div class="card-icon">
+                <i class="fas fa-globe"></i>
+              </div>
+              <h3>Portfolio</h3>
+              <p class="contact-link">mustafasefakara.biz.com</p>
+              <span class="link-hint">Click to visit</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Contact Form -->
+        <section class="contact-section">
+          <div class="section-icon">
+            <i class="fas fa-paper-plane"></i>
+          </div>
+          <h2 class="section-title">Send a Message</h2>
+          <p class="section-description">
+            Have a question or want to work together? Fill out the form below and I'll get back to you as soon as possible.
+          </p>
+
+          <form class="contact-form" id="contactForm">
+            <div class="form-group">
+              <label for="formName">
+                <i class="fas fa-user"></i> Your Name
+              </label>
+              <input
+                type="text"
+                id="formName"
+                name="name"
+                placeholder="Enter your name"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="formEmail">
+                <i class="fas fa-envelope"></i> Your Email
+              </label>
+              <input
+                type="email"
+                id="formEmail"
+                name="email"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="formSubject">
+                <i class="fas fa-tag"></i> Subject
+              </label>
+              <input
+                type="text"
+                id="formSubject"
+                name="subject"
+                placeholder="What's this about?"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="formMessage">
+                <i class="fas fa-comment"></i> Message
+              </label>
+              <textarea
+                id="formMessage"
+                name="message"
+                rows="6"
+                placeholder="Write your message here..."
+                required
+              ></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">
+              <span class="btn-text">Send Message</span>
+              <i class="fas fa-paper-plane"></i>
+              <div class="btn-loader">
+                <div class="spinner"></div>
+              </div>
+            </button>
+
+            <div class="form-message" id="formMessage"></div>
+          </form>
+        </section>
+
+        <!-- Additional Info -->
+        <section class="contact-section">
+          <div class="section-icon">
+            <i class="fas fa-info-circle"></i>
+          </div>
+          <h2 class="section-title">Additional Information</h2>
+          <div class="info-grid">
+            <div class="info-card">
+              <i class="fas fa-clock"></i>
+              <h3>Response Time</h3>
+              <p>I typically respond within 24-48 hours</p>
+            </div>
+            <div class="info-card">
+              <i class="fas fa-code"></i>
+              <h3>Availability</h3>
+              <p>Open to freelance projects and collaborations</p>
+            </div>
+            <div class="info-card">
+              <i class="fas fa-handshake"></i>
+              <h3>Let's Work Together</h3>
+              <p>Interested in web development, full-stack projects, and innovative solutions</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <ul class="footer-links">
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Service</a></li>
+        <li><a href="#">Help Center</a></li>
+        <li><a href="#">Careers</a></li>
+      </ul>
+      <div class="copyright">© 2023 DigitalLibrary. All rights reserved.</div>
+    </div>
+
+    <script src="../script.js"></script>
+    <script src="./contact.js"></script>
+  </body>
+</html>
+

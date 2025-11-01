@@ -22,6 +22,8 @@ app.use("/api/reviews", reviewsRoutes);
 
 app.use(express.static("./Public"));
 app.use(express.static("./Public/Login"));
+app.use(express.static("./Public/About"));
+app.use(express.static("./Public/Contact"));
 
 // initializeBooks now provided by services/books
 
@@ -41,13 +43,13 @@ app.get("/books", async (req, res) => {
 app.get("/about", (req, res) => {
   console.log(req.route);
   res.status(200);
-  res.json("about");
+  res.sendFile(path.join(__dirname, "Public", "About", "index.html"));
   res.end();
 });
 app.get("/contact", (req, res) => {
   console.log(req.route);
   res.status(200);
-  res.send("contact");
+  res.sendFile(path.join(__dirname, "Public", "Contact", "contact.html"));
   res.end();
 });
 app.get("/reviews", (req, res) => {
