@@ -1,0 +1,184 @@
+body {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.profile-container {
+  margin-top: 70px;
+  padding: 40px 5vw;
+  min-height: calc(100vh - 70px);
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  background: linear-gradient(135deg, rgba(107, 78, 26, 0.8) 0%, rgba(82, 58, 17, 0.8) 100%);
+  padding: 40px;
+  border-radius: 15px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border: 2px solid #8b6914;
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d4af37 0%, #8b6914 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: #3a2a0a;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 4px solid #f4e4bc;
+}
+
+.profile-info h1 {
+  color: #f4e4bc;
+  font-size: 36px;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.profile-info p {
+  color: #d4af37;
+  font-size: 18px;
+  margin: 5px 0;
+}
+
+.member-since {
+  color: #8b6914 !important;
+  font-size: 14px !important;
+  font-style: italic;
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, rgba(107, 78, 26, 0.8) 0%, rgba(82, 58, 17, 0.8) 100%);
+  padding: 25px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 2px solid #8b6914;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-card i {
+  font-size: 36px;
+  color: #d4af37;
+  margin-bottom: 15px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #f4e4bc;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  color: #d4af37;
+  font-size: 16px;
+}
+
+.profile-sections {
+  display: grid;
+  gap: 30px;
+}
+
+.profile-section {
+  background: linear-gradient(135deg, rgba(107, 78, 26, 0.6) 0%, rgba(82, 58, 17, 0.6) 100%);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 2px solid #8b6914;
+}
+
+.profile-section h2 {
+  color: #d4af37;
+  font-size: 24px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 2px solid #8b6914;
+  padding-bottom: 10px;
+}
+
+.favorites-list,
+.reviews-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.favorite-item,
+.review-item {
+  background: linear-gradient(135deg, rgba(244, 228, 188, 0.9) 0%, rgba(232, 212, 160, 0.9) 100%);
+  padding: 20px;
+  border-radius: 10px;
+  border: 2px solid #8b6914;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.favorite-item:hover,
+.review-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.favorite-item h3,
+.review-item h3 {
+  color: #3a2a0a;
+  font-size: 18px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #8b6914;
+  padding-bottom: 8px;
+}
+
+.favorite-item p,
+.review-item p {
+  color: #523a11;
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+.review-item .review-text {
+  margin-top: 10px;
+  font-style: italic;
+  color: #6b4e1a;
+  line-height: 1.6;
+}
+
+.review-item .review-rating {
+  color: #d4af37;
+  font-size: 16px;
+  margin-top: 8px;
+}
+
+.no-items {
+  color: #d4af37;
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  font-style: italic;
+  grid-column: 1 / -1;
+}
+

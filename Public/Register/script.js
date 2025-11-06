@@ -173,9 +173,14 @@ class SoftMinimalismRegisterForm {
         throw new Error(data.message || "Registration failed");
       }
 
-      // Başarılı kayıt durumunda
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // Başarılı kayıt durumunda - auto-login with remember me
+      if (typeof AuthUtils !== 'undefined') {
+        AuthUtils.saveAuth(data.token, data.user, true); // Auto-remember on registration
+      } else {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("rememberMe", "true");
+      }
 
       // Ana sayfaya yönlendir
       window.location.href = "/";

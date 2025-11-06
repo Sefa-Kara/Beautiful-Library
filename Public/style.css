@@ -489,6 +489,81 @@ body {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
+.book-header {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #8b6914;
+}
+
+.favorite-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5em;
+  color: #8b6914;
+  transition: all 0.3s ease;
+  padding: 5px 10px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.favorite-btn i {
+  transition: all 0.3s ease;
+}
+
+.favorite-btn:hover i {
+  transform: scale(1.2);
+  color: #d4af37;
+}
+
+.favorite-btn.active i {
+  color: #d4af37;
+  transform: scale(1.2);
+}
+
+.favorite-btn.active {
+  color: #d4af37;
+}
+
+.favorite-btn:hover:not(:disabled) {
+  transform: scale(1.1);
+  color: #d4af37;
+}
+
+.favorite-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.favorite-btn.review-btn {
+  font-size: 1.3em;
+}
+
+.favorite-btn .tooltip {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  display: none;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.favorite-btn:hover .tooltip {
+  display: block;
+}
+
 .book-details h2 {
   color: #3a2a0a;
   margin-bottom: 15px;
@@ -610,14 +685,12 @@ body {
 
 /* User dropdown */
 .user-dropdown {
-  position: absolute;
-  top: 70px;
-  right: 20px;
+  position: fixed;
   background: rgba(244, 228, 188, 0.95);
   width: 250px;
   border-radius: 8px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
+  z-index: 1001;
   display: none;
   border: 2px solid #8b6914;
   overflow: hidden;
@@ -784,30 +857,7 @@ body {
 }
 
 /* Favorite button styling */
-.favorite-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 5px;
-  font-size: 24px;
-  color: #8b6914;
-  transition: all 0.3s ease;
-  outline: none;
-}
-
-.favorite-btn i {
-  transition: all 0.3s ease;
-}
-
-.favorite-btn:hover i {
-  transform: scale(1.2);
-  color: #d4af37;
-}
-
-.favorite-btn.active i {
-  color: #d4af37;
-  transform: scale(1.2);
-}
+/* Duplicate styles removed - using consolidated styles above */
 
 /* Login Alert Styles */
 .login-alert {

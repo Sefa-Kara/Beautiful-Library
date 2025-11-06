@@ -181,17 +181,35 @@ class SoftMinimalismLoginForm {
         throw new Error(data.message || "Login failed");
       }
 
-      // Token ve kullanıcı bilgilerini kaydet
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // Check remember me checkbox
+      const rememberMe = document.getElementById("remember")?.checked || false;
+
+      // Token ve kullanıcı bilgilerini kaydet (using AuthUtils)
+      if (typeof AuthUtils !== 'undefined') {
+        AuthUtils.saveAuth(data.token, data.user, rememberMe);
+      } else {
+        // Fallback if AuthUtils not loaded
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem("token", data.token);
+        storage.setItem("user", JSON.stringify(data.user));
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+        }
+      }
 
       // Başarılı giriş animasyonu
       this.showGentleSuccess();
 
       // Kullanıcıyı önceki sayfaya yönlendir
       setTimeout(() => {
-        const returnUrl = localStorage.getItem("returnUrl") || "/";
-        localStorage.removeItem("returnUrl"); // URL'yi temizle
+        let returnUrl = "/";
+        if (typeof AuthUtils !== 'undefined') {
+          returnUrl = AuthUtils.getReturnUrl("/");
+        } else {
+          returnUrl = sessionStorage.getItem("returnUrl") || localStorage.getItem("returnUrl") || "/";
+          sessionStorage.removeItem("returnUrl");
+          localStorage.removeItem("returnUrl");
+        }
         window.location.href = returnUrl;
       }, 2000);
     } catch (error) {

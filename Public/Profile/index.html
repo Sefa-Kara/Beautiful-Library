@@ -3,18 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Beautiful Library - Favorites</title>
+    <title>Beautiful Library - My Profile</title>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <link rel="stylesheet" href="../style.css" />
-    <link rel="stylesheet" href="./favorites.css" />
+    <link rel="stylesheet" href="./profile.css" />
   </head>
   <body>
-    <div class="loading" id="loading">Loading favorites...</div>
+    <script>
+      window.initLibrary = null;
+      window.createShelves = null;
+      window.loadBooks = null;
+      window.setupDragging = null;
+    </script>
+    <div class="loading" id="loading">Loading profile...</div>
 
-    <!-- Navigation Bar -->
     <nav class="navbar">
       <div class="logo">
         <i class="fas fa-book-open"></i>
@@ -26,9 +31,7 @@
           <a href="/"><i class="fas fa-home"></i> Home</a>
         </li>
         <li>
-          <a href="/favorites" class="active"
-            ><i class="fas fa-bookmark"></i> Favorites</a
-          >
+          <a href="/favorites"><i class="fas fa-bookmark"></i> Favorites</a>
         </li>
         <li>
           <a href="/reviews"><i class="fas fa-star"></i> Reviews</a>
@@ -41,16 +44,7 @@
         </li>
       </ul>
 
-      <div class="search-container">
-        <i class="fas fa-search"></i>
-        <input
-          type="text"
-          id="searchInput"
-          placeholder="Search In Most Favorites..."
-          autocomplete="off"
-        />
-        <div class="search-suggestions" id="searchSuggestions"></div>
-      </div>
+      <div class="search-container" style="display: none;"></div>
 
       <div class="user-profile" id="userProfile">
         <div class="user-avatar"><i class="fas fa-user"></i></div>
@@ -59,25 +53,53 @@
       </div>
     </nav>
 
-    <!-- User Dropdown -->
     <div class="user-dropdown" id="userDropdown">
       <div class="dropdown-header" id="dropdownHeader"></div>
       <ul class="dropdown-menu" id="dropdownMenu"></ul>
     </div>
 
-    <!-- Library Container -->
-    <div class="library-container" id="libraryContainer">
-      <div class="bookshelf-wrapper" id="bookshelfWrapper">
-        <div class="shelf">
-          <div class="shelf-label">Popular Favorites</div>
-          <div class="shelf-board">
-            <div class="books-container" id="favoritesContainer"></div>
+    <div class="profile-container" id="profileContainer">
+      <div class="profile-header">
+        <div class="profile-avatar" id="profileAvatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="profile-info">
+          <h1 id="profileName">Loading...</h1>
+          <p id="profileEmail">Loading...</p>
+          <p class="member-since" id="memberSince">Member since: Loading...</p>
+        </div>
+      </div>
+
+      <div class="profile-stats">
+        <div class="stat-card">
+          <i class="fas fa-bookmark"></i>
+          <div class="stat-value" id="favoritesCount">0</div>
+          <div class="stat-label">Favorites</div>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-star"></i>
+          <div class="stat-value" id="reviewsCount">0</div>
+          <div class="stat-label">Reviews</div>
+        </div>
+      </div>
+
+      <div class="profile-sections">
+        <div class="profile-section">
+          <h2><i class="fas fa-bookmark"></i> My Favorite Books</h2>
+          <div class="favorites-list" id="favoritesList">
+            <div class="no-items">No favorite books yet</div>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h2><i class="fas fa-star"></i> My Reviews</h2>
+          <div class="reviews-list" id="reviewsList">
+            <div class="no-items">No reviews yet</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Book Modal -->
     <div id="bookModal" class="modal">
       <div class="modal-content">
         <span class="close" id="closeModal">&times;</span>
@@ -85,7 +107,6 @@
       </div>
     </div>
 
-    <!-- Footer -->
     <div class="footer">
       <ul class="footer-links">
         <li><a href="#">Privacy Policy</a></li>
@@ -96,13 +117,9 @@
       <div class="copyright">© 2023 DigitalLibrary. All rights reserved.</div>
     </div>
 
-    <script>
-      // Ana sayfadaki bazı fonksiyonları devre dışı bırak
-      window.initLibrary = null;
-      window.createShelves = null;
-      window.loadBooks = null;
-    </script>
+    <script src="/auth-utils.js"></script>
     <script src="../script.js"></script>
-    <script src="./favorites.js"></script>
+    <script src="./profile.js"></script>
   </body>
 </html>
+

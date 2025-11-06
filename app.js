@@ -24,6 +24,10 @@ app.use(express.static("./Public"));
 app.use(express.static("./Public/Login"));
 app.use(express.static("./Public/About"));
 app.use(express.static("./Public/Contact"));
+app.use(express.static("./Public/Profile"));
+app.use(express.static("./Public/MyFavorites"));
+app.use(express.static("./Public/MyReviews"));
+app.use(express.static("./Public/Settings"));
 
 // initializeBooks now provided by services/books
 
@@ -72,6 +76,18 @@ app.get("/login", (req, res) => {
 });
 app.get("/register", (req, res) => {
   res.sendFile(path.join(__dirname, "Public", "Register", "index.html"));
+});
+app.get("/profile", (req, res) => {
+  res.sendFile(path.join(__dirname, "Public", "Profile", "index.html"));
+});
+app.get("/my-favorites", (req, res) => {
+  res.sendFile(path.join(__dirname, "Public", "MyFavorites", "index.html"));
+});
+app.get("/my-reviews", (req, res) => {
+  res.sendFile(path.join(__dirname, "Public", "MyReviews", "index.html"));
+});
+app.get("/settings", (req, res) => {
+  res.sendFile(path.join(__dirname, "Public", "Settings", "index.html"));
 });
 app.use((req, res) => {
   console.log(req.route);

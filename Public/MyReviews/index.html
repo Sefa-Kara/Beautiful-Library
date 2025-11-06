@@ -3,19 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Beautiful Library</title>
+    <title>Beautiful Library - My Reviews</title>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <link rel="stylesheet" href="./style.css" />
-    <script src="/auth-utils.js"></script>
-    <script src="./script.js"></script>
+    <link rel="stylesheet" href="../style.css" />
   </head>
   <body>
-    <div class="loading" id="loading">Loading library...</div>
+    <script>
+      window.initLibrary = null;
+      window.createShelves = null;
+      window.loadBooks = null;
+      window.setupDragging = null;
+    </script>
+    <div class="loading" id="loading">Loading your reviews...</div>
 
-    <!-- Navigation Bar -->
     <nav class="navbar">
       <div class="logo">
         <i class="fas fa-book-open"></i>
@@ -24,7 +27,7 @@
 
       <ul class="nav-links">
         <li>
-          <a href="/" class="active"><i class="fas fa-home"></i> Home</a>
+          <a href="/"><i class="fas fa-home"></i> Home</a>
         </li>
         <li>
           <a href="/favorites"><i class="fas fa-bookmark"></i> Favorites</a>
@@ -45,12 +48,10 @@
         <input
           type="text"
           id="searchInput"
-          placeholder="Search for books, authors..."
+          placeholder="Search your reviews..."
           autocomplete="off"
         />
-        <div class="search-suggestions" id="searchSuggestions">
-          <!-- Öneriler burada dinamik olarak gösterilecek -->
-        </div>
+        <div class="search-suggestions" id="searchSuggestions"></div>
       </div>
 
       <div class="user-profile" id="userProfile">
@@ -60,28 +61,21 @@
       </div>
     </nav>
 
-    <!-- User Dropdown -->
     <div class="user-dropdown" id="userDropdown">
-      <div class="dropdown-header" id="dropdownHeader">
-        <!-- Header content will be dynamically inserted -->
+      <div class="dropdown-header" id="dropdownHeader"></div>
+      <ul class="dropdown-menu" id="dropdownMenu"></ul>
+    </div>
+
+    <div class="library-container" id="libraryContainer" style="cursor:auto; overflow:auto;">
+      <div class="bookshelf-wrapper" id="bookshelfWrapper" style="position:relative; display:block; width:100%; transform:none; padding: 0 10vw;">
+        <div class="shelf" style="width:auto;">
+          <div class="shelf-label">My Reviews</div>
+          <div class="shelf-board">
+            <div id="reviewsList" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;"></div>
+          </div>
+        </div>
       </div>
-      <ul class="dropdown-menu" id="dropdownMenu">
-        <!-- Menu items will be dynamically inserted -->
-      </ul>
     </div>
-
-    <!-- Search Overlay -->
-    <div class="search-overlay" id="searchOverlay">
-      <div class="search-results">
-        <!-- Search results will appear here -->
-      </div>
-    </div>
-
-    <div class="library-container" id="libraryContainer">
-      <div class="bookshelf-wrapper" id="bookshelfWrapper"></div>
-    </div>
-
-    <div class="shelf-indicators" id="shelfIndicators"></div>
 
     <div id="bookModal" class="modal">
       <div class="modal-content">
@@ -90,26 +84,6 @@
       </div>
     </div>
 
-    <!-- Review Modal -->
-    <div id="reviewModal" class="modal">
-      <div class="modal-content review-modal">
-        <span class="close" id="closeReviewModal">&times;</span>
-        <h2>Write a Review</h2>
-        <div class="review-form">
-          <div class="rating" id="reviewStars" aria-label="Star rating">
-            <span data-value="5">★</span>
-            <span data-value="4">★</span>
-            <span data-value="3">★</span>
-            <span data-value="2">★</span>
-            <span data-value="1">★</span>
-          </div>
-          <textarea id="reviewText" rows="5" placeholder="Share your thoughts..."></textarea>
-          <button id="submitReviewBtn" class="review-submit-btn">Submit Review</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer -->
     <div class="footer">
       <ul class="footer-links">
         <li><a href="#">Privacy Policy</a></li>
@@ -119,5 +93,10 @@
       </ul>
       <div class="copyright">© 2023 DigitalLibrary. All rights reserved.</div>
     </div>
+
+    <script src="/auth-utils.js"></script>
+    <script src="../script.js"></script>
+    <script src="./myreviews.js"></script>
   </body>
 </html>
+

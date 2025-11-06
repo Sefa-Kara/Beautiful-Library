@@ -136,13 +136,18 @@ function setupUserDropdown() {
   const dropdownMenu = document.getElementById("dropdownMenu");
 
   function isUserLoggedIn() {
-    return localStorage.getItem("user") !== null;
+    if (typeof AuthUtils !== 'undefined') {
+      return AuthUtils.isAuthenticated();
+    }
+    return !!(localStorage.getItem("user") || sessionStorage.getItem("user"));
   }
 
   function updateDropdownContent() {
     if (isUserLoggedIn()) {
       // Giriş yapmış kullanıcı için görünüm
-      const user = JSON.parse(localStorage.getItem("user"));
+      const user = typeof AuthUtils !== 'undefined' 
+        ? AuthUtils.getUser() 
+        : JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user") || "{}");
 
       profile.innerHTML = `
         <div class="user-avatar">${user.name.charAt(0)}${user.surname.charAt(
@@ -159,8 +164,8 @@ function setupUserDropdown() {
 
       dropdownMenu.innerHTML = `
         <li><a href="/profile"><i class="fas fa-user"></i> My Profile</a></li>
-        <li><a href="/favorites"><i class="fas fa-bookmark"></i> My Favorites</a></li>
-        <li><a href="/history"><i class="fas fa-history"></i> Reading History</a></li>
+        <li><a href="/my-favorites"><i class="fas fa-bookmark"></i> My Favorites</a></li>
+        <li><a href="/my-reviews"><i class="fas fa-star"></i> My Reviews</a></li>
         <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
         <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
       `;
@@ -184,13 +189,18 @@ function setupUserDropdown() {
   }
 
   // Çıkış yapma fonksiyonu
-  window.logout = function () {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    // API çağrısı yapılacak
-    // await fetch('/api/auth/logout');
-    updateDropdownContent();
-    window.location.href = "/login"; // Çıkış yapınca login sayfasına yönlendir
+  window.logout = async function () {
+    if (typeof AuthUtils !== 'undefined') {
+      await AuthUtils.logout('/login');
+    } else {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      localStorage.removeItem("rememberMe");
+      updateDropdownContent();
+      window.location.href = "/login";
+    }
   };
 
   profile.addEventListener("click", () => {
@@ -311,16 +321,19 @@ function adjustColor(color, amount) {
 
 // toggleFavorite fonksiyonunu ekleyelim
 async function toggleFavorite(bookId, author) {
-  const token = localStorage.getItem("token");
-  const userData = localStorage.getItem("user");
+  const token = typeof AuthUtils !== 'undefined' 
+    ? AuthUtils.getToken() 
+    : (localStorage.getItem("token") || sessionStorage.getItem("token"));
+  const user = typeof AuthUtils !== 'undefined' 
+    ? AuthUtils.getUser() 
+    : (localStorage.getItem("user") || sessionStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user")) : null);
 
-  if (!token || !userData) {
+  if (!token || !user) {
     showLoginAlert();
     return;
   }
 
   try {
-    let user = JSON.parse(userData);
     const button = document.querySelector(
       `.favorite-btn[data-bookid="${CSS.escape(bookId)}"]`
     );
@@ -336,7 +349,7 @@ async function toggleFavorite(bookId, author) {
         bookId,
         title: bookId, // bookId olarak title kullanıyoruz
         author,
-        dateAdded: new Date(),
+        dateAdded: new Date().toISOString(),
       }),
     });
 
@@ -346,6 +359,14 @@ async function toggleFavorite(bookId, author) {
 
     // Buton durumunu güncelle
     button.classList.toggle("active");
+    
+    // Update tooltip text immediately
+    const tooltip = button.querySelector(".tooltip");
+    if (tooltip) {
+      tooltip.textContent = button.classList.contains("active") 
+        ? "Remove from favorites" 
+        : "Add to favorites";
+    }
 
     // Kitabın güncel favori durumunu API'den al
     const popularResponse = await fetch("/api/favorites/popular");
@@ -353,6 +374,7 @@ async function toggleFavorite(bookId, author) {
 
     if (isCurrentlyFavorite) {
       // Favorilerden çıkar
+      if (!user.favorites) user.favorites = [];
       user.favorites = user.favorites.filter((fav) => fav.bookId !== bookId);
       showNotification("Kitap favorilerinizden çıkarıldı");
 
@@ -374,7 +396,7 @@ async function toggleFavorite(bookId, author) {
     } else {
       // Favorilere ekle
       if (!user.favorites) user.favorites = [];
-      user.favorites.push({ bookId, title: bookId, author });
+      user.favorites.push({ bookId, title: bookId, author, dateAdded: new Date() });
       showNotification("Kitap favorilerinize eklendi");
 
       // Popüler kitaplar listesini güncelle
@@ -392,8 +414,14 @@ async function toggleFavorite(bookId, author) {
       }
     }
 
-    // localStorage'ı güncelle
-    localStorage.setItem("user", JSON.stringify(user));
+    // Update user data
+    if (typeof AuthUtils !== 'undefined') {
+      const storage = AuthUtils.getStorage();
+      storage.setItem("user", JSON.stringify(user));
+    } else {
+      const storage = localStorage.getItem("rememberMe") === "true" ? localStorage : sessionStorage;
+      storage.setItem("user", JSON.stringify(user));
+    }
 
     // Sayfayı yeniden render et
     popularBooks = popularBooks.sort(
@@ -504,44 +532,4 @@ function highlightBook(book) {
   });
 }
 
-// CSS için stil ekleyelim
-const style = document.createElement("style");
-style.textContent = `
-.favorite-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.5em;
-    color: #ccc;
-    transition: all 0.3s ease;
-    padding: 5px 10px;
-    position: relative;
-}
-
-.favorite-btn.active {
-    color: #ffd700;
-}
-
-.favorite-btn:hover {
-    transform: scale(1.1);
-}
-
-.favorite-btn .tooltip {
-    position: absolute;
-    bottom: -25px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.8);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: nowrap;
-    display: none;
-}
-
-.favorite-btn:hover .tooltip {
-    display: block;
-}
-`;
-document.head.appendChild(style);
+// Remove custom styles - use main stylesheet instead

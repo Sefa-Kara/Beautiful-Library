@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beautiful Library - Settings</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="./settings.css" />
+  </head>
+  <body>
+    <script>
+      window.initLibrary = null;
+      window.createShelves = null;
+      window.loadBooks = null;
+      window.setupDragging = null;
+    </script>
+    <div class="loading" id="loading">Loading settings...</div>
+
+    <nav class="navbar">
+      <div class="logo">
+        <i class="fas fa-book-open"></i>
+        <span>DigitalLibrary</span>
+      </div>
+
+      <ul class="nav-links">
+        <li>
+          <a href="/"><i class="fas fa-home"></i> Home</a>
+        </li>
+        <li>
+          <a href="/favorites"><i class="fas fa-bookmark"></i> Favorites</a>
+        </li>
+        <li>
+          <a href="/reviews"><i class="fas fa-star"></i> Reviews</a>
+        </li>
+        <li>
+          <a href="/about"><i class="fas fa-info-circle"></i> About</a>
+        </li>
+        <li>
+          <a href="/contact"><i class="fas fa-phone"></i> Contact</a>
+        </li>
+      </ul>
+
+      <div class="search-container" style="display: none;"></div>
+
+      <div class="user-profile" id="userProfile">
+        <div class="user-avatar"><i class="fas fa-user"></i></div>
+        <span class="user-name">Guest</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+    </nav>
+
+    <div class="user-dropdown" id="userDropdown">
+      <div class="dropdown-header" id="dropdownHeader"></div>
+      <ul class="dropdown-menu" id="dropdownMenu"></ul>
+    </div>
+
+    <div class="settings-container" id="settingsContainer">
+      <h1 class="settings-title"><i class="fas fa-cog"></i> Account Settings</h1>
+
+      <div class="settings-section">
+        <h2><i class="fas fa-user"></i> Personal Information</h2>
+        <form id="profileForm" class="settings-form">
+          <div class="form-group">
+            <label for="name">First Name</label>
+            <input type="text" id="name" name="name" required />
+          </div>
+          <div class="form-group">
+            <label for="surname">Last Name</label>
+            <input type="text" id="surname" name="surname" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required />
+          </div>
+          <button type="submit" class="save-btn">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+        </form>
+      </div>
+
+      <div class="settings-section">
+        <h2><i class="fas fa-lock"></i> Change Password</h2>
+        <form id="passwordForm" class="settings-form">
+          <div class="form-group">
+            <label for="currentPassword">Current Password</label>
+            <input type="password" id="currentPassword" name="currentPassword" required />
+          </div>
+          <div class="form-group">
+            <label for="newPassword">New Password</label>
+            <input type="password" id="newPassword" name="newPassword" required minlength="6" />
+            <small>Password must be at least 6 characters long</small>
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirm New Password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required />
+          </div>
+          <button type="submit" class="save-btn">
+            <i class="fas fa-key"></i> Update Password
+          </button>
+        </form>
+      </div>
+
+      <div id="notification" class="notification"></div>
+    </div>
+
+    <div class="footer">
+      <ul class="footer-links">
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Service</a></li>
+        <li><a href="#">Help Center</a></li>
+        <li><a href="#">Careers</a></li>
+      </ul>
+      <div class="copyright">© 2023 DigitalLibrary. All rights reserved.</div>
+    </div>
+
+    <script src="/auth-utils.js"></script>
+    <script src="../script.js"></script>
+    <script src="./settings.js"></script>
+  </body>
+</html>
+

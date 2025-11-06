@@ -72,19 +72,63 @@ router.get("/popular", async (req, res) => {
 router.post("/", auth, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
     const { bookId, title, author, dateAdded } = req.body;
 
+    // Validate and sanitize input
+    const sanitizedBookId = String(bookId || '').trim();
+    const sanitizedTitle = String(title || bookId || '').trim();
+    
+    if (!sanitizedBookId || !sanitizedTitle) {
+      return res.status(400).json({ message: "Book ID and title are required" });
+    }
+
     // Kitap zaten favorilerde mi kontrol et
-    if (user.favorites.some((fav) => fav.bookId === bookId)) {
+    const existingFavorite = user.favorites.find((fav) => fav.bookId === sanitizedBookId);
+    if (existingFavorite) {
       return res.status(400).json({ message: "Book already in favorites" });
     }
 
-    user.favorites.push({ bookId, title, author, dateAdded });
+    // Ensure dateAdded is a valid date
+    let favoriteDate;
+    try {
+      favoriteDate = dateAdded ? new Date(dateAdded) : new Date();
+      if (isNaN(favoriteDate.getTime())) {
+        favoriteDate = new Date();
+      }
+    } catch (e) {
+      favoriteDate = new Date();
+    }
+    
+    user.favorites.push({ 
+      bookId: sanitizedBookId, 
+      title: sanitizedTitle, 
+      author: author ? String(author).trim() : null, 
+      dateAdded: favoriteDate 
+    });
+    
     await user.save();
 
-    res.status(201).json({ message: "Added to favorites" });
+    res.status(201).json({ 
+      message: "Added to favorites",
+      favorite: {
+        bookId: sanitizedBookId,
+        title: sanitizedTitle,
+        author: author ? String(author).trim() : null
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error adding favorite:", error);
+    console.error("Request body:", req.body);
+    console.error("User ID:", req.userId);
+    res.status(500).json({ 
+      message: "Server error", 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

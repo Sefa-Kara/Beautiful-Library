@@ -52,18 +52,41 @@ async function initializeBooks() {
   if (bookCache) {
     return bookCache;
   }
+  // Fetch 500 books from each source in parallel
   const [foreverBooks, yearlyBooks] = await Promise.all([
-    getTrending("alltime", 100),
-    getTrending("yearly", 100),
+    getTrending("alltime", 300),
+    getTrending("yearly", 300),
   ]);
-  const combined = [...foreverBooks, ...yearlyBooks];
-  const editionKeys = combined
+
+  // Use Map to track unique books by work key to avoid duplicates
+  const uniqueBooksMap = new Map();
+
+  // Process all books and keep only unique ones (by work key)
+  const allBooks = [...foreverBooks, ...yearlyBooks];
+  for (const book of allBooks) {
+    // Use work key as unique identifier, fallback to title+author if key not available
+    const uniqueKey =
+      book.key || `${book.title || ""}_${book.author_name?.[0] || ""}`;
+
+    // Only add if we haven't seen this book before
+    // Prefer alltime books over yearly if duplicate (alltime comes first in array)
+    if (!uniqueBooksMap.has(uniqueKey)) {
+      uniqueBooksMap.set(uniqueKey, book);
+    }
+  }
+
+  // Convert Map values back to array
+  const uniqueBooks = Array.from(uniqueBooksMap.values());
+
+  // Extract edition keys for all unique books
+  const editionKeys = uniqueBooks
     .map((b) => b.editions?.docs?.[0]?.key)
     .filter(Boolean);
 
+  // Fetch pages for all unique books in parallel batches
   const pagesApiBooks = await fetchAllPages(editionKeys);
 
-  const books = combined.map((book) => {
+  const books = uniqueBooks.map((book) => {
     const editionKey = book.editions?.docs?.[0]?.key;
     const fromApiBooks = pagesApiBooks.find((p) =>
       editionKey ? p.edition.includes(editionKey.replace("/books/", "")) : false
@@ -80,5 +103,3 @@ async function initializeBooks() {
 }
 
 module.exports = { initializeBooks };
-
-

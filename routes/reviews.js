@@ -51,6 +51,43 @@ router.post("/check", auth, async (req, res) => {
   }
 });
 
+// Get current user's own reviews
+router.get("/my-reviews", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Home list meta (author/year/pages)
+    const homeBooks = await initializeBooks();
+    const byTitle = new Map();
+    homeBooks.forEach((b) => {
+      if (b && b.title) {
+        if (!byTitle.has(b.title)) byTitle.set(b.title, b);
+      }
+    });
+
+    const userReviews = (user.reviews || []).map((r) => {
+      const meta = byTitle.get(r.title) || {};
+      return {
+        bookId: r.bookId,
+        title: r.title,
+        review: r.review,
+        reviewerName: r.reviewerName || `${user.name} ${user.surname}`,
+        dateReviewed: r.dateReviewed,
+        rating: r.rating,
+        author: meta.author || null,
+        year: meta.year || null,
+        pages: meta.pages || null,
+      };
+    });
+
+    userReviews.sort((a, b) => new Date(b.dateReviewed) - new Date(a.dateReviewed));
+    res.json(userReviews);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
 // Get all reviews (newest first)
 router.get("/", async (_req, res) => {
   try {

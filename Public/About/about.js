@@ -48,8 +48,8 @@ function setupUserDropdown() {
 
       dropdownMenu.innerHTML = `
         <li><a href="/profile"><i class="fas fa-user"></i> My Profile</a></li>
-        <li><a href="/favorites"><i class="fas fa-bookmark"></i> My Favorites</a></li>
-        <li><a href="/history"><i class="fas fa-history"></i> Reading History</a></li>
+        <li><a href="/my-favorites"><i class="fas fa-bookmark"></i> My Favorites</a></li>
+        <li><a href="/my-reviews"><i class="fas fa-star"></i> My Reviews</a></li>
         <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
         <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
       `;

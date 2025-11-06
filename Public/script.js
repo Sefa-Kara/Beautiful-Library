@@ -1,3 +1,10 @@
+// Utility function to escape HTML
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = String(text || "");
+  return div.innerHTML;
+}
+
 async function fetchBooks() {
   const res = await fetch("/books");
   return await res.json();
@@ -6,9 +13,29 @@ async function fetchBooks() {
 let allBooks = [];
 document.addEventListener("DOMContentLoaded", async () => {
   try {
+    // Load AuthUtils if available
+    if (typeof AuthUtils === "undefined") {
+      const script = document.createElement("script");
+      script.src = "/auth-utils.js";
+      document.head.appendChild(script);
+    }
+
     // Mevcut kullanıcı bilgilerini güncelle
-    const token = localStorage.getItem("token");
+    const token =
+      typeof AuthUtils !== "undefined"
+        ? AuthUtils.getToken()
+        : localStorage.getItem("token") || sessionStorage.getItem("token");
+
     if (token) {
+      // Verify token validity
+      if (typeof AuthUtils !== "undefined") {
+        const isValid = await AuthUtils.verifyToken();
+        if (!isValid) {
+          // Token invalid, user will be logged out
+          return;
+        }
+      }
+
       try {
         const response = await fetch("/api/favorites", {
           headers: {
@@ -17,10 +44,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
         if (response.ok) {
           const favorites = await response.json();
-          const userData = JSON.parse(localStorage.getItem("user"));
-          if (userData) {
-            userData.favorites = favorites;
-            localStorage.setItem("user", JSON.stringify(userData));
+          const user =
+            typeof AuthUtils !== "undefined"
+              ? AuthUtils.getUser()
+              : JSON.parse(
+                  localStorage.getItem("user") ||
+                    sessionStorage.getItem("user") ||
+                    "{}"
+                );
+          if (user) {
+            user.favorites = favorites;
+            if (typeof AuthUtils !== "undefined") {
+              const storage = AuthUtils.getStorage();
+              storage.setItem("user", JSON.stringify(user));
+            } else {
+              const storage =
+                localStorage.getItem("rememberMe") === "true"
+                  ? localStorage
+                  : sessionStorage;
+              storage.setItem("user", JSON.stringify(user));
+            }
           }
         }
       } catch (e) {
@@ -471,14 +514,24 @@ function setupUserDropdown() {
   const dropdownHeader = document.getElementById("dropdownHeader");
   const dropdownMenu = document.getElementById("dropdownMenu");
   function isUserLoggedIn() {
-    // Burada kendi kontrol mantığınızı kullanabilirsiniz
-    return localStorage.getItem("user") !== null;
+    if (typeof AuthUtils !== "undefined") {
+      return AuthUtils.isAuthenticated();
+    }
+    // Fallback
+    return !!(localStorage.getItem("user") || sessionStorage.getItem("user"));
   }
 
   function updateDropdownContent() {
     if (isUserLoggedIn()) {
       // Giriş yapmış kullanıcı için görünüm
-      const user = JSON.parse(localStorage.getItem("user")); // veya API'den gelen veri
+      const user =
+        typeof AuthUtils !== "undefined"
+          ? AuthUtils.getUser()
+          : JSON.parse(
+              localStorage.getItem("user") ||
+                sessionStorage.getItem("user") ||
+                "{}"
+            );
 
       profile.innerHTML = `
         <div class="user-avatar">${user.name.charAt(0)}${user.surname.charAt(
@@ -494,10 +547,10 @@ function setupUserDropdown() {
       `;
 
       dropdownMenu.innerHTML = `
-        <li><a href="#"><i class="fas fa-user"></i> My Profile</a></li>
-        <li><a href="#"><i class="fas fa-bookmark"></i> My Favorites</a></li>
-        <li><a href="#"><i class="fas fa-history"></i> Reading History</a></li>
-        <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+        <li><a href="/profile"><i class="fas fa-user"></i> My Profile</a></li>
+        <li><a href="/my-favorites"><i class="fas fa-bookmark"></i> My Favorites</a></li>
+        <li><a href="/my-reviews"><i class="fas fa-star"></i> My Reviews</a></li>
+        <li><a href="/settings"><i class="fas fa-cog"></i> Settings</a></li>
         <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
       `;
     } else {
@@ -524,15 +577,56 @@ function setupUserDropdown() {
   updateDropdownContent();
 
   // Çıkış yapma fonksiyonu
-  window.logout = function () {
-    localStorage.removeItem("user");
-    // API çağrısı yapılacak
-    // await fetch('/api/auth/logout');
-    updateDropdownContent();
+  window.logout = async function () {
+    if (typeof AuthUtils !== "undefined") {
+      await AuthUtils.logout("/");
+    } else {
+      // Fallback
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      localStorage.removeItem("rememberMe");
+      updateDropdownContent();
+      window.location.href = "/login";
+    }
   };
 
+  // Function to position dropdown relative to profile button
+  function positionDropdown() {
+    if (!profile || !dropdown) return;
+
+    const profileRect = profile.getBoundingClientRect();
+    const navbar = document.querySelector(".navbar");
+    const navbarRect = navbar ? navbar.getBoundingClientRect() : null;
+
+    // Position dropdown below the navbar, aligned with the profile button
+    if (navbarRect) {
+      dropdown.style.top = `${navbarRect.bottom}px`;
+      dropdown.style.right = `${window.innerWidth - profileRect.right}px`;
+    } else {
+      // Fallback: position below profile button
+      dropdown.style.top = `${profileRect.bottom + 5}px`;
+      dropdown.style.right = `${window.innerWidth - profileRect.right}px`;
+    }
+  }
+
   profile.addEventListener("click", () => {
+    positionDropdown(); // Reposition before showing
     dropdown.classList.toggle("show");
+  });
+
+  // Reposition dropdown on scroll and resize
+  window.addEventListener("scroll", () => {
+    if (dropdown.classList.contains("show")) {
+      positionDropdown();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (dropdown.classList.contains("show")) {
+      positionDropdown();
+    }
   });
 
   // Dropdown dışına tıklandığında kapat
@@ -717,14 +811,23 @@ async function showBookDetails(book) {
   const details = document.getElementById("bookDetails");
 
   // Kullanıcı ve favori durumunu kontrol et
-  const token = localStorage.getItem("token");
-  const userData = localStorage.getItem("user");
+  const token =
+    typeof AuthUtils !== "undefined"
+      ? AuthUtils.getToken()
+      : localStorage.getItem("token") || sessionStorage.getItem("token");
+  const user =
+    typeof AuthUtils !== "undefined"
+      ? AuthUtils.getUser()
+      : localStorage.getItem("user") || sessionStorage.getItem("user")
+      ? JSON.parse(
+          localStorage.getItem("user") || sessionStorage.getItem("user")
+        )
+      : null;
   let isFavorite = false;
   let isReviewed = false;
 
-  if (token && userData) {
+  if (token && user) {
     try {
-      const user = JSON.parse(userData);
       // Favori kontrolü
       isFavorite = user.favorites?.some((fav) => fav.bookId === book.title);
 
@@ -741,7 +844,7 @@ async function showBookDetails(book) {
         const data = await response.json();
         isFavorite = data.isFavorite;
 
-        // localStorage'ı güncelle
+        // Update user data
         if (
           isFavorite &&
           !user.favorites?.some((fav) => fav.bookId === book.title)
@@ -752,7 +855,16 @@ async function showBookDetails(book) {
             title: book.title,
             author: book.author,
           });
-          localStorage.setItem("user", JSON.stringify(user));
+          if (typeof AuthUtils !== "undefined") {
+            const storage = AuthUtils.getStorage();
+            storage.setItem("user", JSON.stringify(user));
+          } else {
+            const storage =
+              localStorage.getItem("rememberMe") === "true"
+                ? localStorage
+                : sessionStorage;
+            storage.setItem("user", JSON.stringify(user));
+          }
         }
       }
       // Review kontrolü
@@ -773,14 +885,21 @@ async function showBookDetails(book) {
     }
   }
 
+  // Escape HTML and prepare data attributes for safe handling
+  const escapedTitle = escapeHtml(book.title || "");
+  const escapedAuthor = escapeHtml(book.author || "Unknown Author");
+  // Store original values (including null/undefined) for API calls, but use "Unknown Author" for display
+  const bookData = JSON.stringify({
+    title: book.title || "",
+    author: book.author || null, // Use null instead of "Unknown Author" for API
+  }).replace(/"/g, "&quot;");
+
   details.innerHTML = `
-    <h2>${book.title}</h2>
+    <h2>${escapedTitle}</h2>
     <div class="book-header">
         <button class="favorite-btn ${isFavorite ? "active" : ""}" 
-                onclick="toggleFavorite('${book.title}', '${
-    book.author || "Unknown Author"
-  }')"
-                data-bookid="${book.title}">
+                data-bookid="${escapedTitle.replace(/"/g, "&quot;")}"
+                data-bookdata="${bookData}">
             <i class="fas fa-star"></i>
             <span class="tooltip">${
               isFavorite ? "Remove from favorites" : "Add to favorites"
@@ -788,39 +907,107 @@ async function showBookDetails(book) {
         </button>
         <button class="favorite-btn review-btn ${isReviewed ? "active" : ""}" 
                 ${isReviewed ? "disabled" : ""}
-                onclick="openReviewModal('${book.title}', '${
-    book.author || "Unknown Author"
-  }')"
-                data-bookid="${book.title}">
+                data-bookid="${escapedTitle.replace(/"/g, "&quot;")}"
+                data-bookdata="${bookData}">
             <i class="fas fa-pen"></i>
             <span class="tooltip">${
               isReviewed ? "Already reviewed" : "Add review"
             }</span>
         </button>
     </div>
-    <p><strong>Author:</strong> ${book.author || "Unknown Author"}</p>
+    <p><strong>Author:</strong> ${escapedAuthor}</p>
     <p><strong>Year:</strong> ${book.year || "Unknown Year"}</p>
     <p><strong>Pages:</strong> ${book.pages || "Unknown Pages"}</p>
   `;
+
+  // Add event listeners instead of inline onclick
+  const favoriteBtn = details.querySelector(".favorite-btn:not(.review-btn)");
+  if (favoriteBtn) {
+    favoriteBtn.addEventListener("click", () => {
+      try {
+        const bookDataStr = favoriteBtn.dataset.bookdata.replace(
+          /&quot;/g,
+          '"'
+        );
+        const bookData = JSON.parse(bookDataStr);
+        // Use the original title and author, not "Unknown Author" fallback
+        const bookTitle = bookData.title || "";
+        const bookAuthor =
+          bookData.author && bookData.author !== "Unknown Author"
+            ? bookData.author
+            : null;
+        toggleFavorite(bookTitle, bookAuthor);
+      } catch (error) {
+        console.error("Error parsing book data:", error);
+        showNotification("Error: Could not parse book data", "error");
+      }
+    });
+  }
+
+  const reviewBtn = details.querySelector(".review-btn");
+  if (reviewBtn && !reviewBtn.disabled) {
+    reviewBtn.addEventListener("click", () => {
+      const bookData = JSON.parse(
+        reviewBtn.dataset.bookdata.replace(/&quot;/g, '"')
+      );
+      openReviewModal(bookData.title, bookData.author);
+    });
+  }
 
   modal.classList.add("show");
 }
 
 async function toggleFavorite(bookId, author) {
-  const token = localStorage.getItem("token");
-  const userData = localStorage.getItem("user");
-
-  if (!token || !userData) {
-    showLoginAlert();
+  // Validate inputs first
+  if (!bookId) {
+    console.error("toggleFavorite called with invalid bookId:", bookId);
+    showNotification("Error: Invalid book information", "error");
     return;
   }
 
-  const user = JSON.parse(userData);
+  const token =
+    typeof AuthUtils !== "undefined"
+      ? AuthUtils.getToken()
+      : localStorage.getItem("token") || sessionStorage.getItem("token");
+  const user =
+    typeof AuthUtils !== "undefined"
+      ? AuthUtils.getUser()
+      : localStorage.getItem("user") || sessionStorage.getItem("user")
+      ? JSON.parse(
+          localStorage.getItem("user") || sessionStorage.getItem("user")
+        )
+      : null;
+
+  if (!token || !user) {
+    showLoginAlert();
+    return;
+  }
   // CSS seçiciyi güvenli hale getirelim
   const favoriteBtn = document.querySelector(
     `.favorite-btn[data-bookid="${CSS.escape(bookId)}"]`
   );
+
+  if (!favoriteBtn) {
+    console.error("Favorite button not found for bookId:", bookId);
+    showNotification("Error: Could not find favorite button", "error");
+    return;
+  }
+
   const isFavorite = favoriteBtn.classList.contains("active");
+
+  // Validate inputs before making request
+  if (!bookId || String(bookId).trim() === "") {
+    console.error("Invalid bookId:", bookId);
+    showNotification("Error: Invalid book ID", "error");
+    return;
+  }
+
+  const requestBody = {
+    bookId: String(bookId).trim(),
+    title: String(bookId).trim(),
+    author: author ? String(author).trim() : null,
+    dateAdded: new Date().toISOString(),
+  };
 
   try {
     const response = await fetch("/api/favorites", {
@@ -829,42 +1016,121 @@ async function toggleFavorite(bookId, author) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        bookId: bookId,
-        title: bookId,
-        author: author,
-        dateAdded: new Date(),
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       if (response.status === 401) {
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
+        if (typeof AuthUtils !== "undefined") {
+          AuthUtils.clearAuth();
+        } else {
+          localStorage.removeItem("user");
+          localStorage.removeItem("token");
+          sessionStorage.removeItem("user");
+          sessionStorage.removeItem("token");
+        }
         showLoginAlert();
         return;
       }
-      throw new Error("Failed to update favorites");
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        errorData = { message: `Server error (${response.status})` };
+      }
+      console.error("API Error:", errorData, "Request body:", requestBody);
+      throw new Error(errorData.message || "Failed to update favorites");
     }
 
     favoriteBtn.classList.toggle("active");
+
+    // Update tooltip text immediately
+    const tooltip = favoriteBtn.querySelector(".tooltip");
+    if (tooltip) {
+      tooltip.textContent = favoriteBtn.classList.contains("active")
+        ? "Remove from favorites"
+        : "Add to favorites";
+    }
 
     const updatedUser = { ...user };
     if (!isFavorite) {
       if (!updatedUser.favorites) updatedUser.favorites = [];
       updatedUser.favorites.push({ bookId, title: bookId, author });
-      showNotification("Kitap favorilerinize eklendi");
+      showNotification("Book added to favorites");
     } else {
       updatedUser.favorites = updatedUser.favorites.filter(
         (f) => f.bookId !== bookId
       );
-      showNotification("Kitap favorilerinizden çıkarıldı");
+      showNotification("Book Removed from favorites");
     }
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+
+    // Save updated user
+    if (typeof AuthUtils !== "undefined") {
+      const storage = AuthUtils.getStorage();
+      storage.setItem("user", JSON.stringify(updatedUser));
+    } else {
+      const storage =
+        localStorage.getItem("rememberMe") === "true"
+          ? localStorage
+          : sessionStorage;
+      storage.setItem("user", JSON.stringify(updatedUser));
+    }
   } catch (error) {
     console.error("Error toggling favorite:", error);
     showNotification("Favoriler güncellenirken bir hata oluştu", "error");
   }
+}
+
+// Notification function
+function showNotification(message, type = "success") {
+  // Remove existing notifications
+  const existing = document.querySelectorAll(".notification");
+  existing.forEach((n) => n.remove());
+
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+
+  // Add styles if not already present
+  if (!document.getElementById("notification-styles")) {
+    const style = document.createElement("style");
+    style.id = "notification-styles";
+    style.textContent = `
+      .notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 6px;
+        color: white;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 10000;
+        opacity: 1;
+        transition: opacity 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        max-width: 300px;
+      }
+      .notification.success {
+        background: #4caf50;
+      }
+      .notification.error {
+        background: #f44336;
+      }
+      .notification.info {
+        background: #2196f3;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  document.body.appendChild(notification);
+
+  // Remove after 3 seconds
+  setTimeout(() => {
+    notification.style.opacity = "0";
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
 }
 
 // Show login alert function
@@ -897,8 +1163,12 @@ function closeLoginAlert(button) {
 
 // Redirect to login page
 function redirectToLogin() {
-  // Save current page URL to localStorage to redirect back after login
-  localStorage.setItem("returnUrl", window.location.pathname);
+  // Save current page URL to redirect back after login
+  if (typeof AuthUtils !== "undefined") {
+    AuthUtils.saveReturnUrl(window.location.pathname);
+  } else {
+    sessionStorage.setItem("returnUrl", window.location.pathname);
+  }
   window.location.href = "/login";
 }
 
@@ -934,9 +1204,19 @@ function ensureReviewModalSetup() {
 }
 
 function openReviewModal(bookId, author) {
-  const token = localStorage.getItem("token");
-  const userData = localStorage.getItem("user");
-  if (!token || !userData) {
+  const token =
+    typeof AuthUtils !== "undefined"
+      ? AuthUtils.getToken()
+      : localStorage.getItem("token") || sessionStorage.getItem("token");
+  const user =
+    typeof AuthUtils !== "undefined"
+      ? AuthUtils.getUser()
+      : localStorage.getItem("user") || sessionStorage.getItem("user")
+      ? JSON.parse(
+          localStorage.getItem("user") || sessionStorage.getItem("user")
+        )
+      : null;
+  if (!token || !user) {
     showLoginAlert();
     return;
   }
@@ -952,9 +1232,19 @@ function openReviewModal(bookId, author) {
 }
 
 async function submitReviewFromModal() {
-  const token = localStorage.getItem("token");
-  const userData = localStorage.getItem("user");
-  if (!token || !userData) {
+  const token =
+    typeof AuthUtils !== "undefined"
+      ? AuthUtils.getToken()
+      : localStorage.getItem("token") || sessionStorage.getItem("token");
+  const user =
+    typeof AuthUtils !== "undefined"
+      ? AuthUtils.getUser()
+      : localStorage.getItem("user") || sessionStorage.getItem("user")
+      ? JSON.parse(
+          localStorage.getItem("user") || sessionStorage.getItem("user")
+        )
+      : null;
+  if (!token || !user) {
     showLoginAlert();
     return;
   }
@@ -995,7 +1285,6 @@ async function submitReviewFromModal() {
     }
 
     // Update local user cache
-    const user = JSON.parse(userData);
     user.reviews = user.reviews || [];
     user.reviews.push({
       bookId,
@@ -1004,7 +1293,18 @@ async function submitReviewFromModal() {
       rating,
       dateReviewed: new Date().toISOString(),
     });
-    localStorage.setItem("user", JSON.stringify(user));
+
+    // Save updated user
+    if (typeof AuthUtils !== "undefined") {
+      const storage = AuthUtils.getStorage();
+      storage.setItem("user", JSON.stringify(user));
+    } else {
+      const storage =
+        localStorage.getItem("rememberMe") === "true"
+          ? localStorage
+          : sessionStorage;
+      storage.setItem("user", JSON.stringify(user));
+    }
 
     document.getElementById("reviewModal").classList.remove("show");
     showNotification("Review submitted");
