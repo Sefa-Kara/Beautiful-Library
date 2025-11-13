@@ -8,7 +8,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <script>
@@ -66,12 +66,33 @@
       <ul class="dropdown-menu" id="dropdownMenu"></ul>
     </div>
 
-    <div class="library-container" id="libraryContainer" style="cursor:auto; overflow:auto;">
-      <div class="bookshelf-wrapper" id="bookshelfWrapper" style="position:relative; display:block; width:100%; transform:none; padding: 0 10vw;">
-        <div class="shelf" style="width:auto;">
+    <div
+      class="library-container"
+      id="libraryContainer"
+      style="cursor: auto; overflow: auto"
+    >
+      <div
+        class="bookshelf-wrapper"
+        id="bookshelfWrapper"
+        style="
+          position: relative;
+          display: block;
+          width: 100%;
+          transform: none;
+          padding: 0 10vw;
+        "
+      >
+        <div class="shelf" style="width: auto">
           <div class="shelf-label">My Reviews</div>
           <div class="shelf-board">
-            <div id="reviewsList" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;"></div>
+            <div
+              id="reviewsList"
+              style="
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                gap: 16px;
+              "
+            ></div>
           </div>
         </div>
       </div>
@@ -95,8 +116,7 @@
     </div>
 
     <script src="/auth-utils.js"></script>
-    <script src="../script.js"></script>
-    <script src="./myreviews.js"></script>
+    <script src="/script.js"></script>
+    <script src="/MyReviews/myreviews.js"></script>
   </body>
 </html>
-

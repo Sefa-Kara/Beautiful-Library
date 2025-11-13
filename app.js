@@ -20,14 +20,8 @@ app.use("/api/auth", authRoutes); // Bu satırı ekleyin
 app.use("/api/favorites", require("./routes/favorites"));
 app.use("/api/reviews", reviewsRoutes);
 
-app.use(express.static("./Public"));
-app.use(express.static("./Public/Login"));
-app.use(express.static("./Public/About"));
-app.use(express.static("./Public/Contact"));
-app.use(express.static("./Public/Profile"));
-app.use(express.static("./Public/MyFavorites"));
-app.use(express.static("./Public/MyReviews"));
-app.use(express.static("./Public/Settings"));
+// Tüm statik dosyalar için tek kök tanımı
+app.use(express.static(path.join(__dirname, "Public")));
 
 // initializeBooks now provided by services/books
 

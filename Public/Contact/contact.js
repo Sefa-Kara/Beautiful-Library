@@ -29,12 +29,25 @@ function setupUserDropdown() {
   const dropdownMenu = document.getElementById("dropdownMenu");
 
   function isUserLoggedIn() {
-    return localStorage.getItem("user") !== null;
+    if (typeof AuthUtils !== "undefined") {
+      return AuthUtils.isAuthenticated();
+    }
+    // Fallback
+    return !!(
+      localStorage.getItem("user") || sessionStorage.getItem("user")
+    );
   }
 
   function updateDropdownContent() {
     if (isUserLoggedIn()) {
-      const user = JSON.parse(localStorage.getItem("user"));
+      const user =
+        typeof AuthUtils !== "undefined"
+          ? AuthUtils.getUser()
+          : JSON.parse(
+              localStorage.getItem("user") ||
+                sessionStorage.getItem("user") ||
+                "{}"
+            );
 
       profile.innerHTML = `
         <div class="user-avatar">${user.name.charAt(0)}${user.surname.charAt(
@@ -75,11 +88,19 @@ function setupUserDropdown() {
     }
   }
 
-  window.logout = function () {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    updateDropdownContent();
-    window.location.href = "/login";
+  window.logout = async function () {
+    if (typeof AuthUtils !== "undefined") {
+      await AuthUtils.logout("/");
+    } else {
+      // Fallback
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      localStorage.removeItem("rememberMe");
+      updateDropdownContent();
+      window.location.href = "/login";
+    }
   };
 
   profile.addEventListener("click", () => {
