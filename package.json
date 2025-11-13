@@ -4,7 +4,7 @@
   "description": "Beautiful Library",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon app.js"
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",
